@@ -9,6 +9,7 @@ main :: () {
     // SetExitKey(0); // for now leave esc it makes it faster to debug
     SetTraceLogLevel(xx TraceLogLevel.LOG_NONE);
     SetMouseCursor(xx MouseCursor.CROSSHAIR);
+    Fonts.bahnschrift = LoadFont("assets/fonts/bahnschrift.ttf");
 
     game.resetting = true;
     while game.resetting {
@@ -18,10 +19,15 @@ main :: () {
     CloseWindow();
 }
 
+Fonts: struct {
+    bahnschrift: Font;
+}
+
 #load "Game.jai";
 #load "Entity.jai";
 #load "Input.jai";
 #load "Map.jai";
+#load "Utils.jai";
 
 #import "Math";
 #import "Basic";

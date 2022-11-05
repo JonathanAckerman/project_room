@@ -24,3 +24,8 @@ Rooms: struct {
         height=2,
     };
 }
+
+Hand_Slot :: struct {
+    room: Room;
+    exists: bool;
+}
