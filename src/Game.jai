@@ -9,10 +9,12 @@ DECK_POS  :: Vector2.{1505, 100};
 HAND_POS :: Vector2.[.{1310, 700}, .{1505, 700}, .{1700, 700}];
 
 MAP_TOP_LEFT :: Vector2.{94, 95};
+SIDEBAR_LEFT :: 1241;
 
 game: struct {
     resetting: bool;
-    should_reset_cursor: bool;
+    intended_cursor: MouseCursor = .CROSSHAIR;
+    mouse_cursor: MouseCursor;
 
     level: Level;
 
@@ -57,6 +59,7 @@ game_loop :: inline () {
                     spawn(room);
 
                     hand[highlighted_card].exists = false;
+                    intended_cursor = .CROSSHAIR;
                 }
                 else reset_highlight = false;
             }
@@ -91,7 +94,17 @@ game_loop :: inline () {
             }
         }
         
-        if reset_highlight then highlighted_card = -1;
+        if reset_highlight {
+            highlighted_card = -1;
+            intended_cursor = .CROSSHAIR;
+        }
+    }
+
+    // @Note: apparently setting the cursor is jank and shouldn't be 
+    //        done in a game loop, to get around this I use a flag
+    if game.intended_cursor != game.mouse_cursor {
+        SetMouseCursor(xx game.intended_cursor);
+        game.mouse_cursor = game.intended_cursor;
     }
 
     // draw --------------------------------------------------------------
@@ -105,12 +118,11 @@ game_loop :: inline () {
     draw_hand();
 
     if highlighted_card > -1 {
-        draw_room_ghost(hand[highlighted_card].room, input.mouse_position);
-    } else if should_reset_cursor {
-        // @Note: apparently setting the cursor is jank and shouldn't be 
-        //        done in a game loop, to get around this I use a flag
-        SetMouseCursor(xx MouseCursor.CROSSHAIR);
-        should_reset_cursor = false;
+        if input.mouse_position.x <= SIDEBAR_LEFT {
+            draw_room_ghost(hand[highlighted_card].room, input.mouse_position);
+        } else {
+            intended_cursor = .CROSSHAIR;
+        }
     }
 
     for _Room render(it);
@@ -202,9 +214,29 @@ draw_hand :: () {
         DrawRectangleLinesEx(r, 8.0, BLUE);
     }
 
-    DrawRectangleV(HAND_POS[0], xy(185, 250), color0);
-    DrawRectangleV(HAND_POS[1], xy(185, 250), color1);
-    DrawRectangleV(HAND_POS[2], xy(185, 250), color2);
+    DrawRectangleV(HAND_POS[0], xy(185, 250), ifx highlighted_card == 0 then WHITE else color0);
+    DrawRectangleV(HAND_POS[1], xy(185, 250), ifx highlighted_card == 1 then WHITE else color1);
+    DrawRectangleV(HAND_POS[2], xy(185, 250), ifx highlighted_card == 2 then WHITE else color2);
+
+    // @@@: Factor this to not have to check twice
+    if hand[0].exists {
+        card_center := HAND_POS[0] + CARD_SIZE/2.0;
+        room := hand[0].room;
+        room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+        draw_room_representation(room, card_center - room_size/2.0, 255);
+    }
+    if hand[1].exists {
+        card_center := HAND_POS[1] + CARD_SIZE/2.0;
+        room := hand[1].room;
+        room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+        draw_room_representation(room, card_center - room_size/2.0, 255);
+    }
+    if hand[2].exists {
+        card_center := HAND_POS[2] + CARD_SIZE/2.0;
+        room := hand[2].room;
+        room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+        draw_room_representation(room, card_center - room_size/2.0, 255);
+    }
 }
 
 is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {

@@ -8,7 +8,6 @@ main :: () {
     SetTargetFPS(60);
     // SetExitKey(0); // for now leave esc it makes it faster to debug
     SetTraceLogLevel(xx TraceLogLevel.LOG_NONE);
-    SetMouseCursor(xx MouseCursor.CROSSHAIR);
     Fonts.bahnschrift = LoadFont("assets/fonts/bahnschrift.ttf");
 
     game.resetting = true;

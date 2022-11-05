@@ -34,13 +34,23 @@ draw_room_ghost :: (room: Room, position: Vector2) {
 
     if is_valid_placement(x, y, room.width, room.height) {
         DrawRectangleV(get_cell_position(x, y), size, color);
-        SetMouseCursor(xx MouseCursor.POINTING_HAND);
-        game.should_reset_cursor = true;
-    }
-    else {
+        game.intended_cursor = .POINTING_HAND; // @Jank: drawing a ghost shouldnt set the cursor
+    } else {
         DrawRectangleV(position, size, color);
-        SetMouseCursor(xx MouseCursor.NOT_ALLOWED);
-        game.should_reset_cursor = true;
+        game.intended_cursor = .NOT_ALLOWED;
+    }
+}
+draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
+    size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
+    color := YELLOW;
+    color.a = opacity;
+
+    for i: 0..room.width - 1 {
+        for j: 0..room.height - 1 {
+            pos := position + xy(xx i, xx j) * (CELL_WIDTH + 1);
+            DrawRectangleV(pos, CELL_SIZE, color);
+            DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
+        }
     }
 }
 
