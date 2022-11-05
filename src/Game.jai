@@ -93,7 +93,8 @@ game_loop :: inline () {
             if level.deck.count > 0 && hand_count < 3 {
                 open_slots := (3 - hand_count) - 1;
                 for i: 0..open_slots {
-                    room := pop(*level.deck);
+                    room: Room;
+                    room.room_prototype = pop(*level.deck);
                     index := first_empty_index(hand); // @@@: check -1?
                     hand[index].room = room;
                     hand[index].exists = true;
@@ -330,4 +331,17 @@ load_level :: (index: int) {
     highlighted_card = -1;
     is_first_placement = true;
     for * hand it.exists = false;
+
+    // clean this up at some point
+    indices: [..] int;
+    for Decks[index] {
+        array_add(*indices, it_index);
+    }
+    for shuffle(indices) {
+        array_add(*level.deck, Decks[index][it]);
+    }
+}
+
+shuffle :: (arr: [..] int) -> [..] int {
+    return fisher_yates_shuffle(arr);
 }

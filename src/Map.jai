@@ -1,7 +1,7 @@
 Level :: struct {
     width: int;
     height: int;
-    deck: [..] Room;
+    deck: [..] Room_Prototype;
 }
 
 Level_Sequence: [3] Level = .[
@@ -15,21 +15,6 @@ Levels: struct {
     TUTORIAL_1 :: Level.{
         width=5,
         height=5,
-        deck=.[
-            Rooms.R11,
-            Rooms.R11,
-
-            Rooms.R21,
-            Rooms.R21,
-
-            Rooms.R31,
-            Rooms.R31,
-
-            Rooms.R41,
-            Rooms.R41,
-
-            Rooms.R51,
-        ]
     };
     TUTORIAL_2 :: Level.{
         width=10,
@@ -47,11 +32,15 @@ Levels: struct {
         width=12,
         height=3,
         deck=.[
+            Rooms.R11,
+            Rooms.R11,
+
+            Rooms.R12,
             Rooms.R12,
             Rooms.R12,
             Rooms.R13,
             Rooms.R13,
-            
+
             Rooms.R21,
             Rooms.R21,
             Rooms.R41,
@@ -61,3 +50,22 @@ Levels: struct {
         ]
     };
 }
+
+// Decks --------------------------------------------------------------------------
+Decks: [][] Room_Prototype = .[
+    .[
+        Rooms.R11,
+        Rooms.R11,
+
+        Rooms.R21,
+        Rooms.R21,
+
+        Rooms.R31,
+        Rooms.R31,
+
+        Rooms.R41,
+        Rooms.R41,
+
+        Rooms.R51,
+    ],
+];

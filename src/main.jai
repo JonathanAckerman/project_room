@@ -1,5 +1,5 @@
-WINDOW_WIDTH :: 1920;  //64 cells
-WINDOW_HEIGHT :: 1080; //36 cells
+WINDOW_WIDTH :: 1920;
+WINDOW_HEIGHT :: 1080;
 WINDOW_CENTER :: Vector2.{WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0};
 
 main :: () {
@@ -30,6 +30,7 @@ Fonts: struct {
 
 #import "Math";
 #import "Basic";
+#import "PCG";
 
 #import "Entity_Storage";
 #import "Raylib-Jai";

@@ -1,8 +1,12 @@
-Room :: struct {
-    using #as entity: Entity;
+Room_Prototype :: struct {
     width: int;  // # cells
     height: int; // # cells
     type: Room_Type;
+}
+
+Room :: struct {
+    using #as entity: Entity;
+    using #as room_prototype: Room_Prototype;
 
     is_placed: bool;
     cell_coord: struct {
@@ -47,7 +51,7 @@ draw_room_ghost :: (room: *Room, position: Vector2) {
         game.intended_cursor = .NOT_ALLOWED;
     }
 }
-draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
+draw_room_representation :: (room: Room_Prototype, position: Vector2, opacity: u8) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
     color.a = opacity;
@@ -68,23 +72,23 @@ Rooms: struct {
     //
     // Squares
     //
-    R11 :: Room.{
+    R11 :: Room_Prototype.{
         width=1,
         height=1,
     };
-    R22 :: Room.{
+    R22 :: Room_Prototype.{
         width=2,
         height=2,
     };
-    R33 :: Room.{
+    R33 :: Room_Prototype.{
         width=3,
         height=3,
     };
-    R44 :: Room.{
+    R44 :: Room_Prototype.{
         width=4,
         height=4,
     };
-    R55 :: Room.{
+    R55 :: Room_Prototype.{
         width=5,
         height=5,
     };
@@ -92,35 +96,35 @@ Rooms: struct {
     //
     // 1xN
     //
-    R12 :: Room.{
+    R12 :: Room_Prototype.{
         width=1,
         height=2,
     };
-    R21 :: Room.{
+    R21 :: Room_Prototype.{
         width=2,
         height=1,
     };
-    R13 :: Room.{
+    R13 :: Room_Prototype.{
         width=1,
         height=3,
     };
-    R31 :: Room.{
+    R31 :: Room_Prototype.{
         width=3,
         height=1,
     };
-    R14 :: Room.{
+    R14 :: Room_Prototype.{
         width=1,
         height=4,
     };
-    R41 :: Room.{
+    R41 :: Room_Prototype.{
         width=4,
         height=1,
     };
-    R15 :: Room.{
+    R15 :: Room_Prototype.{
         width=1,
         height=5,
     };
-    R51 :: Room.{
+    R51 :: Room_Prototype.{
         width=5,
         height=1,
     };
@@ -128,27 +132,27 @@ Rooms: struct {
     //
     // 2xN
     //
-    R23 :: Room.{
+    R23 :: Room_Prototype.{
         width=2,
         height=3,
     };
-    R32 :: Room.{
+    R32 :: Room_Prototype.{
         width=3,
         height=2,
     };
-    R24 :: Room.{
+    R24 :: Room_Prototype.{
         width=2,
         height=4,
     };
-    R42 :: Room.{
+    R42 :: Room_Prototype.{
         width=4,
         height=2,
     };
-    R25 :: Room.{
+    R25 :: Room_Prototype.{
         width=2,
         height=5,
     };
-    R52 :: Room.{
+    R52 :: Room_Prototype.{
         width=5,
         height=2,
     };
@@ -156,19 +160,19 @@ Rooms: struct {
     //
     // 3xN
     //
-    R34 :: Room.{
+    R34 :: Room_Prototype.{
         width=3,
         height=4,
     };
-    R43 :: Room.{
+    R43 :: Room_Prototype.{
         width=4,
         height=3,
     };
-    R35 :: Room.{
+    R35 :: Room_Prototype.{
         width=3,
         height=5,
     };
-    R53 :: Room.{
+    R53 :: Room_Prototype.{
         width=5,
         height=3,
     };
@@ -176,17 +180,17 @@ Rooms: struct {
     //
     // 4xN
     //
-    R45 :: Room.{
+    R45 :: Room_Prototype.{
         width=4,
         height=5,
     };
-    R54 :: Room.{
+    R54 :: Room_Prototype.{
         width=5,
         height=4,
     };
 }
 
 Hand_Slot :: struct {
-    room: Room;
+    room: Room; // !!!: this might be real bad
     exists: bool;
 }
