@@ -40,47 +40,55 @@ game_loop :: inline () {
     handle_input();
 
     if input.clicked {
-        // hand clicked
-        if is_mouse_over(HAND_POS[0], CARD_SIZE) && hand[0].exists {
-            if highlighted_card == 0 then highlighted_card = -1;
-            else highlighted_card = 0;
-        }
-        else if is_mouse_over(HAND_POS[1], CARD_SIZE) && hand[1].exists {
-            if highlighted_card == 1 then highlighted_card = -1;
-            else highlighted_card = 1;
-        }
-        else if is_mouse_over(HAND_POS[2], CARD_SIZE) && hand[2].exists {
-            if highlighted_card == 2 then highlighted_card = -1;
-            else highlighted_card = 2;
-        }
-        else { // hand was not clicked
-            // deck clicked
-            if is_mouse_over(DECK_POS, CARD_SIZE) {
-                hand_count := count_hand();
-                if level.deck.count > 0 && hand_count < 3 {
-                    open_slots := (3 - hand_count) - 1;
-                    for i: 0..open_slots {
-                        room := pop(*level.deck);
-                        index := first_empty_index(hand); // @@@: check -1?
-                        hand[index].room = room;
-                        hand[index].exists = true;
-                        if level.deck.count == 0 break;
-                    }
-                }
-            }
-            // map clicked
-            if is_mouse_over(MAP_TOP_LEFT, map_size) {
-                if highlighted_card > -1 {
-                    room := hand[highlighted_card].room;
-                    cell_x, cell_y := get_cell_index(input.mouse_position);
-                    print("%, %\n", cell_x, cell_y);
-                    // if cell_x + room.width > level.width
-                    // spawn();
+        reset_highlight := true;
+
+        // map clicked
+        if is_mouse_over(MAP_TOP_LEFT, map_size) {
+            if highlighted_card > -1 {
+                room := hand[highlighted_card].room;
+                cell_x, cell_y := get_cell_index(input.mouse_position);
+
+                fits_horizontally := cell_x + room.width <= level.width;
+                fits_vertically   := cell_y + room.height <= level.height;
+                if fits_horizontally && fits_vertically {
+                    room.position = get_cell_position(cell_x, cell_y);
+                    spawn(room);
                     hand[highlighted_card].exists = false;
                 }
+                else reset_highlight = false;
             }
-            highlighted_card = -1;
         }
+        
+        // hand clicked
+        if is_mouse_over(HAND_POS[0], CARD_SIZE) && hand[0].exists {
+            reset_highlight = highlighted_card == 0;
+            highlighted_card = 0;
+        }
+        if is_mouse_over(HAND_POS[1], CARD_SIZE) && hand[1].exists {
+            reset_highlight = highlighted_card == 1;
+            highlighted_card = 1;
+        }
+        if is_mouse_over(HAND_POS[2], CARD_SIZE) && hand[2].exists {
+            reset_highlight = highlighted_card == 2;
+            highlighted_card = 2;
+        }
+
+        // deck clicked
+        if is_mouse_over(DECK_POS, CARD_SIZE) {
+            hand_count := count_hand();
+            if level.deck.count > 0 && hand_count < 3 {
+                open_slots := (3 - hand_count) - 1;
+                for i: 0..open_slots {
+                    room := pop(*level.deck);
+                    index := first_empty_index(hand); // @@@: check -1?
+                    hand[index].room = room;
+                    hand[index].exists = true;
+                    if level.deck.count == 0 break;
+                }
+            }
+        }
+        
+        if reset_highlight then highlighted_card = -1;
     }
 
     // draw --------------------------------------------------------------
@@ -197,4 +205,10 @@ get_cell_index :: (point: Vector2) -> int, int{
     x := cast(int) (map_coord.x / (CELL_WIDTH + 1));
     y := cast(int) (map_coord.y / (CELL_WIDTH + 1));
     return x, y;
+}
+
+get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
+    x := 1 + MAP_TOP_LEFT.x + x_index * (CELL_WIDTH + 1);
+    y := 2 + MAP_TOP_LEFT.y + y_index * (CELL_WIDTH + 1);
+    return xy(x, y);
 }
