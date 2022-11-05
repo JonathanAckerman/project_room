@@ -1,12 +1,12 @@
-Map :: struct {
+Level :: struct {
     width: int;
     height: int;
     deck: [..] Room;
 }
 
 // Archetypes -----------------------------------------------------------------------
-Maps: struct {
-    BASIC :: Map.{
+Levels: struct {
+    BASIC :: Level.{
         width=20,
         height=20,
         deck=.[

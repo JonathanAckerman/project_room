@@ -13,7 +13,7 @@ MAP_TOP_LEFT :: Vector2.{94, 95};
 game: struct {
     resetting: bool;
 
-    current_map: Map;
+    level: Level;
 
     hand: [3] Hand_Slot;
     count_hand :: () -> int { 
@@ -57,20 +57,21 @@ game_loop :: inline () {
             // deck clicked
             if is_mouse_over(DECK_POS, CARD_SIZE) {
                 hand_count := count_hand();
-                if current_map.deck.count > 0 && hand_count < 3 {
+                if level.deck.count > 0 && hand_count < 3 {
                     open_slots := (3 - hand_count) - 1;
                     for i: 0..open_slots {
-                        room := pop(*current_map.deck);
+                        room := pop(*level.deck);
                         index := first_empty_index(hand); // @@@: check -1?
                         hand[index].room = room;
                         hand[index].exists = true;
-                        if current_map.deck.count == 0 break;
+                        if level.deck.count == 0 break;
                     }
                 }
             }
             // map clicked
             if is_mouse_over(MAP_TOP_LEFT, map_size) {
                 if highlighted_card > -1 {
+                    
                     hand[highlighted_card].exists = false;
                 }
             }
@@ -103,9 +104,9 @@ game_reset :: () {
     game = .{};
     frame = .{};
 
-    current_map = Maps.BASIC;
-    map_size.x = 1 + current_map.width * CELL_WIDTH + current_map.width;
-    map_size.y = 2 + current_map.height * CELL_WIDTH + current_map.height;
+    level = Levels.BASIC;
+    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
+    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
 }
 
 draw_background_grid :: () {
@@ -118,7 +119,7 @@ draw_background_grid :: () {
 }
 
 draw_map :: () {
-    using game.current_map;
+    using game.level;
 
     cell_offset :: 3;
     pixel_offset :: cell_offset * CELL_WIDTH + 3;
@@ -131,7 +132,7 @@ draw_map :: () {
 }
 
 draw_deck :: () {
-    using game.current_map;
+    using game.level;
 
     DrawTextEx(Fonts.bahnschrift, "Deck", DECK_POS - xy(0, 50), 32, 1, WHITE);
 
