@@ -17,6 +17,7 @@ game: struct {
     mouse_cursor: MouseCursor;
 
     level: Level;
+    level_index: int;
 
     hand: [3] Hand_Slot;
     count_hand :: () -> int { 
@@ -65,6 +66,8 @@ game_loop :: inline () {
                     hand[highlighted_card].exists = false;
                     intended_cursor = .CROSSHAIR;
                     is_first_placement = false;
+
+                    check_level_success();
                 }
                 else reset_highlight = false;
             }
@@ -147,9 +150,7 @@ game_reset :: () {
     game = .{};
     frame = .{};
 
-    level = Levels.BASIC;
-    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
-    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
+    load_level(0);
 }
 
 draw_background_grid :: () {
@@ -300,4 +301,33 @@ is_valid_placement :: (x: int, y: int, room: Room) -> bool {
         }
     }
     return false;
+}
+
+check_level_success :: () {
+    using game;
+    if level.deck.count == 0 && count_hand() == 0 {
+        level_index += 1;
+        load_level(level_index);
+    }
+}
+
+// @@@: rework this, eg: hand should maybe be separate struct from game
+load_level :: (index: int) {
+    using game;
+    if index == Level_Sequence.count {
+        print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
+        game.resetting = true;
+        return;
+    }
+
+    level = Level_Sequence[level_index];
+    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
+    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
+    for context.entity_storage._Room {
+        despawn(it);
+    }
+    intended_cursor = .CROSSHAIR;
+    highlighted_card = -1;
+    is_first_placement = true;
+    for * hand it.exists = false;
 }

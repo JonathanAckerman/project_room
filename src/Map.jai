@@ -4,18 +4,49 @@ Level :: struct {
     deck: [..] Room;
 }
 
+Level_Sequence: [2] Level = .[
+    Levels.TUTORIAL_1,
+    Levels.TUTORIAL_2,
+];
+
 // Archetypes -----------------------------------------------------------------------
 Levels: struct {
-    BASIC :: Level.{
-        width=20,
-        height=20,
+    TUTORIAL_1 :: Level.{
+        width=5,
+        height=5,
         deck=.[
             Rooms.R11,
-            Rooms.R12,
+            Rooms.R11,
+
             Rooms.R21,
-            Rooms.R22,
-            Rooms.R23,
-            Rooms.R32,
+            Rooms.R21,
+
+            Rooms.R31,
+            Rooms.R31,
+
+            Rooms.R41,
+            Rooms.R41,
+
+            Rooms.R51,
+        ]
+    };
+    TUTORIAL_2 :: Level.{
+        width=15,
+        height=15,
+        deck=.[
+            Rooms.R11,
+            Rooms.R11,
+
+            Rooms.R21,
+            Rooms.R21,
+
+            Rooms.R31,
+            Rooms.R31,
+
+            Rooms.R41,
+            Rooms.R41,
+
+            Rooms.R51,
         ]
     };
 }

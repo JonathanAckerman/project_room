@@ -63,11 +63,35 @@ draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
 
 // Archetypes -----------------------------------------------------------------------
 Rooms: struct {
-    // @@@: I need to rethink this
+    // @@@: I maybe need to rethink this
+
+    //
+    // Squares
+    //
     R11 :: Room.{
         width=1,
         height=1,
     };
+    R22 :: Room.{
+        width=2,
+        height=2,
+    };
+    R33 :: Room.{
+        width=3,
+        height=3,
+    };
+    R44 :: Room.{
+        width=4,
+        height=4,
+    };
+    R55 :: Room.{
+        width=5,
+        height=5,
+    };
+    
+    //
+    // 1xN
+    //
     R12 :: Room.{
         width=1,
         height=2,
@@ -76,10 +100,34 @@ Rooms: struct {
         width=2,
         height=1,
     };
-    R22 :: Room.{
-        width=2,
-        height=2,
+    R13 :: Room.{
+        width=1,
+        height=3,
     };
+    R31 :: Room.{
+        width=3,
+        height=1,
+    };
+    R14 :: Room.{
+        width=1,
+        height=4,
+    };
+    R41 :: Room.{
+        width=4,
+        height=1,
+    };
+    R15 :: Room.{
+        width=1,
+        height=5,
+    };
+    R51 :: Room.{
+        width=5,
+        height=1,
+    };
+    
+    //
+    // 2xN
+    //
     R23 :: Room.{
         width=2,
         height=3,
@@ -87,6 +135,54 @@ Rooms: struct {
     R32 :: Room.{
         width=3,
         height=2,
+    };
+    R24 :: Room.{
+        width=2,
+        height=4,
+    };
+    R42 :: Room.{
+        width=4,
+        height=2,
+    };
+    R25 :: Room.{
+        width=2,
+        height=5,
+    };
+    R52 :: Room.{
+        width=5,
+        height=2,
+    };
+
+    //
+    // 3xN
+    //
+    R34 :: Room.{
+        width=3,
+        height=4,
+    };
+    R43 :: Room.{
+        width=4,
+        height=3,
+    };
+    R35 :: Room.{
+        width=3,
+        height=5,
+    };
+    R53 :: Room.{
+        width=5,
+        height=3,
+    };
+
+    //
+    // 4xN
+    //
+    R45 :: Room.{
+        width=4,
+        height=5,
+    };
+    R54 :: Room.{
+        width=5,
+        height=4,
     };
 }
 
