@@ -71,7 +71,9 @@ game_loop :: inline () {
             // map clicked
             if is_mouse_over(MAP_TOP_LEFT, map_size) {
                 if highlighted_card > -1 {
-                    
+                    room := hand[highlighted_card].room;
+                    get_cell(input.mouse_position);
+                    // spawn();
                     hand[highlighted_card].exists = false;
                 }
             }
@@ -123,8 +125,8 @@ draw_map :: () {
 
     cell_offset :: 3;
     pixel_offset :: cell_offset * CELL_WIDTH + 3;
-    for i: 0..width {
-        for j: 0..height {
+    for i: 0..width-1 {
+        for j: 0..height-1 {
             pos := xy(1 + pixel_offset + i * CELL_WIDTH + i, 2 + pixel_offset + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, GRAY);
         }
@@ -186,4 +188,11 @@ is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
             input.mouse_position.x <= topleft.x + size.x &&
             input.mouse_position.y >= topleft.y && 
             input.mouse_position.y <= topleft.y + size.y);
+}
+
+get_cell :: (point: Vector2) {
+    map_coord := point - MAP_TOP_LEFT;
+    x := cast(int) (map_coord.x / CELL_WIDTH);
+    y := cast(int) (map_coord.y / CELL_WIDTH);
+    print("%, %\n", x, y);
 }
