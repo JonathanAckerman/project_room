@@ -1,7 +1,7 @@
 EXECUTABLE_NAME :: "project_room";
 OUTPUT_PATH :: "bin";
 USER_MODULES_PATH :: "../modules";
-ENTRY_POINT :: "main.jai";
+ENTRY_POINT :: "src/main.jai";
 
 #run {
     w := compiler_create_workspace("Target Program");

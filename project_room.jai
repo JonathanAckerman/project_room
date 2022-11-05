@@ -1,5 +1,5 @@
 USER_MODULES_PATH :: "modules";
-ENTRY_POINT :: "meta.jai";
+ENTRY_POINT :: "src/meta.jai";
 
 #run {
     w := compiler_create_workspace("Target Program");
