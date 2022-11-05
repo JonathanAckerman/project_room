@@ -14,7 +14,9 @@ simulate :: (using room: *Room) {
 }
 
 render :: (using room: *Room) {
-
+    size := xy(width * CELL_WIDTH + (width - 1), height * CELL_WIDTH + (height - 1));
+    color := YELLOW;
+    DrawRectangleV(position, size, color);
 }
 
 // Archetypes -----------------------------------------------------------------------

@@ -101,6 +101,8 @@ game_loop :: inline () {
     draw_deck();
     draw_hand();
 
+    for _Room render(it);
+
     EndDrawing();
 
     // cleanup -----------------------------------------------------------
@@ -208,7 +210,7 @@ get_cell_index :: (point: Vector2) -> int, int{
 }
 
 get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
-    x := 1 + MAP_TOP_LEFT.x + x_index * (CELL_WIDTH + 1);
-    y := 2 + MAP_TOP_LEFT.y + y_index * (CELL_WIDTH + 1);
+    x := MAP_TOP_LEFT.x + x_index * (CELL_WIDTH + 1);
+    y := MAP_TOP_LEFT.y + y_index * (CELL_WIDTH + 1);
     return xy(x, y);
 }
