@@ -28,6 +28,8 @@ game: struct {
 
     is_map_hovered: bool;
     map_size: Vector2;
+
+    is_first_placement := true;
 }
 
 frame: struct {
@@ -50,8 +52,10 @@ game_loop :: inline () {
             if highlighted_card > -1 {
                 room := hand[highlighted_card].room;
                 cell_x, cell_y := get_cell_index(input.mouse_position);
+                room.cell_coord.x = cell_x;
+                room.cell_coord.y = cell_y;
 
-                if is_valid_placement(cell_x, cell_y, room.width, room.height) {
+                if is_valid_placement(cell_x, cell_y, room) {
                     room.position = get_cell_position(cell_x, cell_y);
                     room.is_placed = true;
                     room.cell_coord.x = cell_x;
@@ -60,6 +64,7 @@ game_loop :: inline () {
 
                     hand[highlighted_card].exists = false;
                     intended_cursor = .CROSSHAIR;
+                    is_first_placement = false;
                 }
                 else reset_highlight = false;
             }
@@ -119,7 +124,7 @@ game_loop :: inline () {
 
     if highlighted_card > -1 {
         if input.mouse_position.x <= SIDEBAR_LEFT {
-            draw_room_ghost(hand[highlighted_card].room, input.mouse_position);
+            draw_room_ghost(*hand[highlighted_card].room, input.mouse_position);
         } else {
             intended_cursor = .CROSSHAIR;
         }
@@ -262,21 +267,37 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     return xy(x, y);
 }
 
-is_valid_placement :: (x: int, y: int, width: int, height: int) -> bool {
-    fits_horizontally := x + width <= game.level.width;
-    fits_vertically   := y + height <= game.level.height;
+is_valid_placement :: (x: int, y: int, room: Room) -> bool {
+    fits_horizontally := x + room.width <= game.level.width;
+    fits_vertically   := y + room.height <= game.level.height;
     if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
         overlaps_existing_room := false;
         for context.entity_storage._Room {
-            if x + width - 1 >= it.cell_coord.x 
+            if x + room.width - 1 >= it.cell_coord.x 
             && x < it.cell_coord.x + it.width
-            && y + height - 1 >= it.cell_coord.y 
+            && y + room.height - 1 >= it.cell_coord.y 
             && y < it.cell_coord.y + it.height {
                 overlaps_existing_room = true;
                 break;
             }
         }
-        if !overlaps_existing_room then return true;
+        if !overlaps_existing_room {
+            // test adjacency to other rooms
+            if game.is_first_placement return true;
+            for context.entity_storage._Room {
+                on_right := left(room) == right(it) + 1;
+                on_left := right(room) == left(it) - 1;
+                on_bottom := top(room) == bottom(it) + 1;
+                on_top := bottom(room) == top(it) - 1;
+                
+                if (on_left   && top(room) <= bottom(it) && bottom(room) >= top(it))
+                || (on_right  && top(room) <= bottom(it) && bottom(room) >= top(it))
+                || (on_top    && right(room) >= left(it) && left(room) <= right(it))
+                || (on_bottom && right(room) >= left(it) && left(room) <= right(it)) {
+                    return true;
+                }
+            }
+        }
     }
     return false;
 }

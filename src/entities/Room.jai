@@ -11,6 +11,11 @@ Room :: struct {
     };
 }
 
+left   :: (room) => room.cell_coord.x;
+right  :: (room) => room.cell_coord.x + room.width - 1;
+top    :: (room) => room.cell_coord.y;
+bottom :: (room) => room.cell_coord.y + room.height - 1;
+
 Room_Type :: enum {
     EMPTY;
 }
@@ -25,14 +30,16 @@ render :: (using room: *Room) {
     DrawRectangleV(position, size, color);
 }
 
-draw_room_ghost :: (room: Room, position: Vector2) {
+draw_room_ghost :: (room: *Room, position: Vector2) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
     color.a = 100;
 
     x, y := get_cell_index(position);
+    room.cell_coord.x = x;
+    room.cell_coord.y = y;
 
-    if is_valid_placement(x, y, room.width, room.height) {
+    if is_valid_placement(x, y, room) {
         DrawRectangleV(get_cell_position(x, y), size, color);
         game.intended_cursor = .POINTING_HAND; // @Jank: drawing a ghost shouldnt set the cursor
     } else {
