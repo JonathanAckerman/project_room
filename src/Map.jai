@@ -31,22 +31,15 @@ Levels: struct {
         ]
     };
     TUTORIAL_2 :: Level.{
-        width=15,
-        height=15,
+        width=10,
+        height=10,
         deck=.[
-            Rooms.R11,
-            Rooms.R11,
-
-            Rooms.R21,
-            Rooms.R21,
-
-            Rooms.R31,
-            Rooms.R31,
-
-            Rooms.R41,
-            Rooms.R41,
-
-            Rooms.R51,
+            Rooms.R33,
+            Rooms.R33,
+            Rooms.R33,
+            Rooms.R44,
+            Rooms.R44,
+            Rooms.R55,
         ]
     };
 }
