@@ -72,7 +72,9 @@ game_loop :: inline () {
             if is_mouse_over(MAP_TOP_LEFT, map_size) {
                 if highlighted_card > -1 {
                     room := hand[highlighted_card].room;
-                    get_cell(input.mouse_position);
+                    cell_x, cell_y := get_cell_index(input.mouse_position);
+                    print("%, %\n", cell_x, cell_y);
+                    // if cell_x + room.width > level.width
                     // spawn();
                     hand[highlighted_card].exists = false;
                 }
@@ -190,9 +192,9 @@ is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
             input.mouse_position.y <= topleft.y + size.y);
 }
 
-get_cell :: (point: Vector2) {
-    map_coord := point - MAP_TOP_LEFT;
-    x := cast(int) (map_coord.x / CELL_WIDTH);
-    y := cast(int) (map_coord.y / CELL_WIDTH);
-    print("%, %\n", x, y);
+get_cell_index :: (point: Vector2) -> int, int{
+    map_coord := point - MAP_TOP_LEFT - xy(1,2);
+    x := cast(int) (map_coord.x / (CELL_WIDTH + 1));
+    y := cast(int) (map_coord.y / (CELL_WIDTH + 1));
+    return x, y;
 }
