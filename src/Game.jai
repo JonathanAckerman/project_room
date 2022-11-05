@@ -19,7 +19,7 @@ game_loop :: inline () {
     // simulate ----------------------------------------------------------
     handle_input();
 
-    for _Cell simulate(it);
+    // for _Cell simulate(it);
 
     // draw --------------------------------------------------------------
     BeginDrawing();
@@ -67,4 +67,9 @@ draw_map :: () {
             DrawRectangleV(pos, CELL_SIZE, GRAY);
         }
     }
+}
+
+draw_deck :: () {
+    using game.current_map;
+    
 }
