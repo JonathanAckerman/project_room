@@ -12,6 +12,7 @@ MAP_TOP_LEFT :: Vector2.{94, 95};
 
 game: struct {
     resetting: bool;
+    should_reset_cursor: bool;
 
     level: Level;
 
@@ -51,9 +52,16 @@ game_loop :: inline () {
                 fits_horizontally := cell_x + room.width <= level.width;
                 fits_vertically   := cell_y + room.height <= level.height;
                 if fits_horizontally && fits_vertically {
-                    room.position = get_cell_position(cell_x, cell_y);
-                    spawn(room);
-                    hand[highlighted_card].exists = false;
+                    overlaps_existing_room := false;
+                    // for _Room {
+                    //     if it.
+                    // }
+
+                    if !overlaps_existing_room {
+                        room.position = get_cell_position(cell_x, cell_y);
+                        spawn(room);
+                        hand[highlighted_card].exists = false;
+                    }
                 }
                 else reset_highlight = false;
             }
@@ -100,6 +108,15 @@ game_loop :: inline () {
     draw_map();
     draw_deck();
     draw_hand();
+
+    if highlighted_card > -1 {
+        draw_room_ghost(hand[highlighted_card].room, input.mouse_position);
+    } else if should_reset_cursor {
+        // @Note: apparently setting the cursor is jank and shouldn't be 
+        //        done in a game loop, to get around this I use a flag
+        SetMouseCursor(xx MouseCursor.CROSSHAIR);
+        should_reset_cursor = false;
+    }
 
     for _Room render(it);
 
@@ -206,6 +223,9 @@ get_cell_index :: (point: Vector2) -> int, int{
     map_coord := point - MAP_TOP_LEFT - xy(1,2);
     x := cast(int) (map_coord.x / (CELL_WIDTH + 1));
     y := cast(int) (map_coord.y / (CELL_WIDTH + 1));
+
+    if x < 0 || y < 0 return -1, -1;
+    if x >= game.level.width || y >= game.level.height return -1, -1;
     return x, y;
 }
 
