@@ -138,6 +138,8 @@ game_loop :: inline () {
 
     for _Room render(it);
 
+    DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
+
     EndDrawing();
 
     // cleanup -----------------------------------------------------------
