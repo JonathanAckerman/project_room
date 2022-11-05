@@ -8,10 +8,13 @@ CARD_SIZE :: Vector2.{CARD_WIDTH, CARD_HEIGHT};
 DECK_POS  :: Vector2.{1505, 100};
 HAND_POS :: Vector2.[.{1310, 700}, .{1505, 700}, .{1700, 700}];
 
+MAP_TOP_LEFT :: Vector2.{94, 95};
+
 game: struct {
     resetting: bool;
 
     current_map: Map;
+
     hand: [3] Hand_Slot;
     count_hand :: () -> int { 
         count := 0;
@@ -20,7 +23,8 @@ game: struct {
     }
     highlighted_card := -1;
 
-    deck_hovered: bool;
+    is_map_hovered: bool;
+    map_size: Vector2;
 }
 
 frame: struct {
@@ -35,9 +39,9 @@ game_loop :: inline () {
     // simulate ----------------------------------------------------------
     handle_input();
 
-    // deck clicked
     if input.clicked {
         if is_mouse_over(DECK_POS, CARD_SIZE) {
+            highlighted_card = -1;
             hand_count := count_hand();
             if current_map.deck.count > 0 && hand_count < 3 {
                 open_slots := (3 - hand_count) - 1;
@@ -62,7 +66,15 @@ game_loop :: inline () {
             if highlighted_card == 2 then highlighted_card = -1;
             else highlighted_card = 2;
         }
-        else highlighted_card = -1;
+        else if !is_mouse_over(MAP_TOP_LEFT, map_size) {
+            highlighted_card = -1;
+        }
+        else {
+            if highlighted_card > -1 {
+                hand[highlighted_card].exists = false;
+                highlighted_card = -1;
+            }
+        }
     }
 
     // draw --------------------------------------------------------------
@@ -91,6 +103,8 @@ game_reset :: () {
     frame = .{};
 
     current_map = Maps.BASIC;
+    map_size.x = 1 + current_map.width * CELL_WIDTH + current_map.width;
+    map_size.y = 2 + current_map.height * CELL_WIDTH + current_map.height;
 }
 
 draw_background_grid :: () {
@@ -106,7 +120,7 @@ draw_map :: () {
     using game.current_map;
 
     cell_offset :: 3;
-    pixel_offset :: cell_offset * CELL_WIDTH + 3; 
+    pixel_offset :: cell_offset * CELL_WIDTH + 3;
     for i: 0..width {
         for j: 0..height {
             pos := xy(1 + pixel_offset + i * CELL_WIDTH + i, 2 + pixel_offset + j * CELL_WIDTH + j);
