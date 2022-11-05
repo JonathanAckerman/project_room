@@ -25,7 +25,7 @@ Fonts: struct {
 #load "Game.jai";
 #load "Entity.jai";
 #load "Input.jai";
-#load "Map.jai";
+#load "Level.jai";
 #load "Utils.jai";
 
 #import "Math";

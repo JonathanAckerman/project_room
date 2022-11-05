@@ -45,6 +45,8 @@ game_loop :: inline () {
     // simulate ----------------------------------------------------------
     handle_input();
 
+    if level.starting_rooms.count > 0 then is_first_placement = false;
+
     if input.clicked {
         reset_highlight := true;
 
@@ -339,6 +341,12 @@ load_level :: (index: int) {
     }
     for shuffle(indices) {
         array_add(*level.deck, Decks[index][it]);
+    }
+
+    for level.starting_rooms {
+        room := it;
+        room.position = get_cell_position(it.cell_coord.x, it.cell_coord.y);
+        spawn(room);
     }
 }
 
