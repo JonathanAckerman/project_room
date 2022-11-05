@@ -3,6 +3,12 @@ Room :: struct {
     width: int;  // # cells
     height: int; // # cells
     type: Room_Type;
+
+    is_placed: bool;
+    cell_coord: struct {
+        x: int;
+        y: int;
+    };
 }
 
 Room_Type :: enum {
@@ -26,9 +32,7 @@ draw_room_ghost :: (room: Room, position: Vector2) {
 
     x, y := get_cell_index(position);
 
-    fits_horizontally := x + room.width <= game.level.width;
-    fits_vertically   := y + room.height <= game.level.height;
-    if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
+    if is_valid_placement(x, y, room.width, room.height) {
         DrawRectangleV(get_cell_position(x, y), size, color);
         SetMouseCursor(xx MouseCursor.POINTING_HAND);
         game.should_reset_cursor = true;

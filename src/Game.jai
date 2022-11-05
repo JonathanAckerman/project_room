@@ -49,19 +49,14 @@ game_loop :: inline () {
                 room := hand[highlighted_card].room;
                 cell_x, cell_y := get_cell_index(input.mouse_position);
 
-                fits_horizontally := cell_x + room.width <= level.width;
-                fits_vertically   := cell_y + room.height <= level.height;
-                if fits_horizontally && fits_vertically {
-                    overlaps_existing_room := false;
-                    // for _Room {
-                    //     if it.
-                    // }
+                if is_valid_placement(cell_x, cell_y, room.width, room.height) {
+                    room.position = get_cell_position(cell_x, cell_y);
+                    room.is_placed = true;
+                    room.cell_coord.x = cell_x;
+                    room.cell_coord.y = cell_y;
+                    spawn(room);
 
-                    if !overlaps_existing_room {
-                        room.position = get_cell_position(cell_x, cell_y);
-                        spawn(room);
-                        hand[highlighted_card].exists = false;
-                    }
+                    hand[highlighted_card].exists = false;
                 }
                 else reset_highlight = false;
             }
@@ -233,4 +228,23 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     x := MAP_TOP_LEFT.x + x_index * (CELL_WIDTH + 1);
     y := MAP_TOP_LEFT.y + y_index * (CELL_WIDTH + 1);
     return xy(x, y);
+}
+
+is_valid_placement :: (x: int, y: int, width: int, height: int) -> bool {
+    fits_horizontally := x + width <= game.level.width;
+    fits_vertically   := y + height <= game.level.height;
+    if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
+        overlaps_existing_room := false;
+        for context.entity_storage._Room {
+            if x + width - 1 >= it.cell_coord.x 
+            && x < it.cell_coord.x + it.width
+            && y + height - 1 >= it.cell_coord.y 
+            && y < it.cell_coord.y + it.height {
+                overlaps_existing_room = true;
+                break;
+            }
+        }
+        if !overlaps_existing_room then return true;
+    }
+    return false;
 }
