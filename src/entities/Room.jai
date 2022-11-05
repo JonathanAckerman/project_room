@@ -46,8 +46,29 @@ draw_room_ghost :: (room: Room, position: Vector2) {
 
 // Archetypes -----------------------------------------------------------------------
 Rooms: struct {
-    BASIC :: Room.{
+    // @@@: I need to rethink this
+    R11 :: Room.{
+        width=1,
+        height=1,
+    };
+    R12 :: Room.{
+        width=1,
+        height=2,
+    };
+    R21 :: Room.{
         width=2,
+        height=1,
+    };
+    R22 :: Room.{
+        width=2,
+        height=2,
+    };
+    R23 :: Room.{
+        width=2,
+        height=3,
+    };
+    R32 :: Room.{
+        width=3,
         height=2,
     };
 }

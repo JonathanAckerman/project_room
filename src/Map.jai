@@ -10,10 +10,12 @@ Levels: struct {
         width=20,
         height=20,
         deck=.[
-            Rooms.BASIC,
-            Rooms.BASIC,
-            Rooms.BASIC,
-            Rooms.BASIC,
+            Rooms.R11,
+            Rooms.R12,
+            Rooms.R21,
+            Rooms.R22,
+            Rooms.R23,
+            Rooms.R32,
         ]
     };
 }
