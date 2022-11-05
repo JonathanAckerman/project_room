@@ -19,41 +19,16 @@ Levels: struct {
     TUTORIAL_2 :: Level.{
         width=10,
         height=10,
-        deck=.[
-            Rooms.R33,
-            Rooms.R33,
-            Rooms.R33,
-            Rooms.R44,
-            Rooms.R44,
-            Rooms.R55,
-        ]
     };
     TUTORIAL_3 :: Level.{
         width=12,
         height=3,
-        deck=.[
-            Rooms.R11,
-            Rooms.R11,
-
-            Rooms.R12,
-            Rooms.R12,
-            Rooms.R12,
-            Rooms.R13,
-            Rooms.R13,
-
-            Rooms.R21,
-            Rooms.R21,
-            Rooms.R41,
-            Rooms.R41,
-            Rooms.R51,
-            Rooms.R51,
-        ]
     };
 }
 
 // Decks --------------------------------------------------------------------------
 Decks: [][] Room_Prototype = .[
-    .[
+    .[// TUTORIAL_1
         Rooms.R11,
         Rooms.R11,
 
@@ -68,4 +43,29 @@ Decks: [][] Room_Prototype = .[
 
         Rooms.R51,
     ],
+    .[// TUTORIAL_2
+        Rooms.R33,
+        Rooms.R33,
+        Rooms.R33,
+        Rooms.R44,
+        Rooms.R44,
+        Rooms.R55,
+    ],
+    .[// TUTORIAL_3
+        Rooms.R11,
+        Rooms.R11,
+
+        Rooms.R12,
+        Rooms.R12,
+        Rooms.R12,
+        Rooms.R13,
+        Rooms.R13,
+
+        Rooms.R21,
+        Rooms.R21,
+        Rooms.R41,
+        Rooms.R41,
+        Rooms.R51,
+        Rooms.R51,
+    ]
 ];
