@@ -40,21 +40,8 @@ game_loop :: inline () {
     handle_input();
 
     if input.clicked {
-        if is_mouse_over(DECK_POS, CARD_SIZE) {
-            highlighted_card = -1;
-            hand_count := count_hand();
-            if current_map.deck.count > 0 && hand_count < 3 {
-                open_slots := (3 - hand_count) - 1;
-                for i: 0..open_slots {
-                    room := pop(*current_map.deck);
-                    index := first_empty_index(hand); // @@@: check -1?
-                    hand[index].room = room;
-                    hand[index].exists = true;
-                    if current_map.deck.count == 0 break;
-                }
-            }
-        }
-        else if is_mouse_over(HAND_POS[0], CARD_SIZE) && hand[0].exists {
+        // hand clicked
+        if is_mouse_over(HAND_POS[0], CARD_SIZE) && hand[0].exists {
             if highlighted_card == 0 then highlighted_card = -1;
             else highlighted_card = 0;
         }
@@ -66,14 +53,28 @@ game_loop :: inline () {
             if highlighted_card == 2 then highlighted_card = -1;
             else highlighted_card = 2;
         }
-        else if !is_mouse_over(MAP_TOP_LEFT, map_size) {
-            highlighted_card = -1;
-        }
-        else {
-            if highlighted_card > -1 {
-                hand[highlighted_card].exists = false;
-                highlighted_card = -1;
+        else { // hand was not clicked
+            // deck clicked
+            if is_mouse_over(DECK_POS, CARD_SIZE) {
+                hand_count := count_hand();
+                if current_map.deck.count > 0 && hand_count < 3 {
+                    open_slots := (3 - hand_count) - 1;
+                    for i: 0..open_slots {
+                        room := pop(*current_map.deck);
+                        index := first_empty_index(hand); // @@@: check -1?
+                        hand[index].room = room;
+                        hand[index].exists = true;
+                        if current_map.deck.count == 0 break;
+                    }
+                }
             }
+            // map clicked
+            if is_mouse_over(MAP_TOP_LEFT, map_size) {
+                if highlighted_card > -1 {
+                    hand[highlighted_card].exists = false;
+                }
+            }
+            highlighted_card = -1;
         }
     }
 
