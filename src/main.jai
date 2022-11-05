@@ -6,7 +6,7 @@ main :: () {
     window_title := to_c_string("Project Room");
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, window_title);
     SetTargetFPS(60);
-    // SetExitKey(0); // for now leave esc it makes it faster to debug
+    SetExitKey(0);
     SetTraceLogLevel(xx TraceLogLevel.LOG_NONE);
     Fonts.bahnschrift = LoadFont("assets/fonts/bahnschrift.ttf");
 

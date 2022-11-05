@@ -16,8 +16,15 @@ handle_input :: () {
     if IsKeyPressed(xx KeyboardKey.F5) {
         game.resetting = true;
     }
+    if IsKeyPressed(xx KeyboardKey.R) {
+        load_level(game.level_index);
+    }
     if IsKeyPressed(xx KeyboardKey.F11) {
         game.level_index += 1;
         load_level(game.level_index);
+    }
+    if IsKeyPressed(xx KeyboardKey.ESCAPE) {
+        game.highlighted_card = -1;
+        game.intended_cursor = .CROSSHAIR;
     }
 }
