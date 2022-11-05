@@ -1,5 +1,5 @@
-WINDOW_WIDTH :: 1536;
-WINDOW_HEIGHT :: 864;
+WINDOW_WIDTH :: 1920;  //64 cells
+WINDOW_HEIGHT :: 1080; //36 cells
 WINDOW_CENTER :: Vector2.{WINDOW_WIDTH/2.0, WINDOW_HEIGHT/2.0};
 
 main :: () {
@@ -19,6 +19,9 @@ main :: () {
 }
 
 #load "Game.jai";
+#load "Entity.jai";
+#load "Input.jai";
+#load "Map.jai";
 
 #import "Math";
 #import "Basic";
