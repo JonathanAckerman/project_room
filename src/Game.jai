@@ -31,6 +31,12 @@ game: struct {
     map_size: Vector2;
 
     is_first_placement := true;
+    door_placement := false;
+    door_ghost: struct {
+        room: Handle(Room);
+        position: Vector2;
+        size: Vector2;
+    }
 }
 
 frame: struct {
@@ -52,7 +58,63 @@ game_loop :: inline () {
 
         // map clicked
         if is_mouse_over(MAP_TOP_LEFT, map_size) {
-            if highlighted_card > -1 {
+            if door_placement {
+                cell_x, cell_y := get_cell_index(input.mouse_position);
+                print("door attempted: %, %\n", cell_x, cell_y);
+                room, gone := from_handle(door_ghost.room);
+                if !gone {
+                    print("room exists\n");
+                    is_valid_cell := false;
+                    for i: 0..room.width-1 {
+                        for j: 0..room.height-1 {
+                            x := room.cell_coord.x + i;
+                            y := room.cell_coord.y + j;
+                            print("room: (%, %)\n", x, y);
+                            if cell_x == x && cell_y == y {
+                                print("is_valid_cell = true\n");
+                                is_valid_cell = true;
+                                break i;
+                            }
+                        }
+                    }
+
+                    if is_valid_cell {
+                        cell_center := get_cell_position(cell_x, cell_y) + CELL_SIZE/2.0;
+                        door: Door;
+                        door.cell_coord.x = cell_x;
+                        door.cell_coord.y = cell_y;
+
+                        faces: [4] Vector2;
+                        faces[0] = cell_center - xy(0, CELL_WIDTH/2.0); // North
+                        faces[1] = cell_center + xy(CELL_WIDTH/2.0, 0); // East
+                        faces[2] = cell_center + xy(0, CELL_WIDTH/2.0); // South
+                        faces[3] = cell_center - xy(CELL_WIDTH/2.0, 0); // West
+                        min_dist: float = distance(input.mouse_position, faces[0]);
+                        min_index: int;
+                        for faces {
+                            dist := distance(input.mouse_position, it);
+                            if dist < min_dist {
+                                min_dist = dist;
+                                min_index = it_index;
+                            }
+                        }
+                        if min_index == {
+                            case 0; door.facing = .NORTH;
+                            case 1; door.facing = .EAST;
+                            case 2; door.facing = .SOUTH;
+                            case 3; door.facing = .WEST;
+                        }
+                        
+                        spawn(door);
+                        door_placement = false;
+
+                        intended_cursor = .CROSSHAIR;
+                        is_first_placement = false;
+                        check_level_success();
+                    }
+                }
+            }
+            else if highlighted_card > -1 {
                 room := hand[highlighted_card].room;
                 cell_x, cell_y := get_cell_index(input.mouse_position);
                 room.cell_coord.x = cell_x;
@@ -63,15 +125,13 @@ game_loop :: inline () {
                     room.is_placed = true;
                     room.cell_coord.x = cell_x;
                     room.cell_coord.y = cell_y;
-                    spawn(room);
+                    door_ghost.room = spawn(room);
 
-                    hand[highlighted_card].exists = false;
-                    intended_cursor = .CROSSHAIR;
-                    is_first_placement = false;
-
-                    check_level_success();
+                    if !is_first_placement then door_placement = true;
                 }
                 else reset_highlight = false;
+
+                hand[highlighted_card].exists = false;
             }
         }
         
@@ -111,6 +171,47 @@ game_loop :: inline () {
         }
     }
 
+    if is_mouse_over(MAP_TOP_LEFT, map_size) {
+        if door_placement {
+            cell_x, cell_y := get_cell_index(input.mouse_position);
+            room, gone := from_handle(door_ghost.room);
+            if !gone {
+                is_valid_cell := false;
+                for i: 0..room.width-1 {
+                    for j: 0..room.height-1 {
+                        x := room.cell_coord.x + i;
+                        y := room.cell_coord.y + j;
+                        if cell_x == x && cell_y == y {
+                            is_valid_cell = true;
+                            break i;
+                        }
+                    }
+                }
+
+                if is_valid_cell {
+                    cell_center := get_cell_position(cell_x, cell_y) + CELL_SIZE/2.0;
+                    position: Vector2;
+                    faces: [4] Vector2;
+                    faces[0] = cell_center - xy(0, CELL_WIDTH/2.0); // North
+                    faces[1] = cell_center + xy(CELL_WIDTH/2.0, 0); // East
+                    faces[2] = cell_center + xy(0, CELL_WIDTH/2.0); // South
+                    faces[3] = cell_center - xy(CELL_WIDTH/2.0, 0); // West
+                    min_dist: float = distance(input.mouse_position, faces[0]);
+                    min_index: int;
+                    for faces {
+                        dist := distance(input.mouse_position, it);
+                        if dist < min_dist {
+                            min_dist = dist;
+                            min_index = it_index;
+                        }
+                    }
+                    door_ghost.position = faces[min_index];
+                    door_ghost.size = ifx min_index == 0 || min_index == 2 then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
+                }
+            }
+        }
+    }
+
     // @Note: apparently setting the cursor is jank and shouldn't be 
     //        done in a game loop, to get around this I use a flag
     if game.intended_cursor != game.mouse_cursor {
@@ -137,6 +238,8 @@ game_loop :: inline () {
     }
 
     for _Room render(it);
+    for _Door render(it);
+    if door_placement DrawRectangleV(door_ghost.position, door_ghost.size, .{0, 0, 255, 100});
 
     DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 
