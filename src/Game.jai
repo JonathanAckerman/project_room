@@ -192,10 +192,10 @@ game_loop :: inline () {
                     cell_center := get_cell_position(cell_x, cell_y) + CELL_SIZE/2.0;
                     position: Vector2;
                     faces: [4] Vector2;
-                    faces[0] = cell_center - xy(0, CELL_WIDTH/2.0); // North
-                    faces[1] = cell_center + xy(CELL_WIDTH/2.0, 0); // East
-                    faces[2] = cell_center + xy(0, CELL_WIDTH/2.0); // South
-                    faces[3] = cell_center - xy(CELL_WIDTH/2.0, 0); // West
+                    faces[0] = cell_center - xy(HORIZ_DOOR_SIZE.x/2, CELL_WIDTH/2.0); // North
+                    faces[1] = cell_center + xy(CELL_WIDTH/2.0, -VERT_DOOR_SIZE.y/2); // East
+                    faces[2] = cell_center + xy(-HORIZ_DOOR_SIZE.x/2, CELL_WIDTH/2.0); // South
+                    faces[3] = cell_center - xy(CELL_WIDTH/2.0, -VERT_DOOR_SIZE.y/2); // West
                     min_dist: float = distance(input.mouse_position, faces[0]);
                     min_index: int;
                     for faces {
@@ -434,6 +434,10 @@ load_level :: (index: int) {
     for context.entity_storage._Room {
         despawn(it);
     }
+    for context.entity_storage._Door {
+        despawn(it);
+    }
+    door_placement = false;
     intended_cursor = .CROSSHAIR;
     highlighted_card = -1;
     is_first_placement = true;

@@ -23,17 +23,17 @@ render :: (using door: *Door) {
     cell_center := get_cell_position(cell_coord.x, cell_coord.y) + CELL_SIZE/2.0;
     if facing == {
         case .NORTH;
-            pos = cell_center - xy(0, CELL_WIDTH/2.0);
             size = HORIZ_DOOR_SIZE;
+            pos = cell_center - xy(size.x/2, CELL_WIDTH/2.0);
         case .EAST;
-            pos = cell_center + xy(CELL_WIDTH/2.0, 0);
             size = VERT_DOOR_SIZE;
+            pos = cell_center + xy(CELL_WIDTH/2.0, -size.y/2);
         case .SOUTH;
-            pos = cell_center + xy(0, CELL_WIDTH/2.0);
             size = HORIZ_DOOR_SIZE;
+            pos = cell_center + xy(-size.x/2, CELL_WIDTH/2.0);
         case .WEST;
-            pos = cell_center - xy(CELL_WIDTH/2.0, 0);
             size = VERT_DOOR_SIZE;
+            pos = cell_center - xy(CELL_WIDTH/2.0, -size.y/2);
     }
     DrawRectangleV(pos, size, BLUE);
 }
