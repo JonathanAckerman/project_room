@@ -41,6 +41,8 @@ game: struct {
         position: Vector2;
         size: Vector2;
     }
+
+    level_has_focus: bool;
 }
 
 Game_State :: enum {
@@ -156,11 +158,12 @@ is_valid_placement :: (x: int, y: int, room: Room) -> bool {
     return false;
 }
 
-check_level_success :: () {
-    using game;
-    if level.deck.count == 0 && count_hand() == 0 {
-        level_index += 1;
-        load_level(level_index);
+check_level_success :: (force_success: bool = false) {
+    beat_level := game.level.deck.count == 0 && game.count_hand() == 0;
+    if force_success || beat_level {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
     }
 }
 
@@ -176,6 +179,7 @@ load_level :: (index: int) {
         return;
     }
 
+    level_has_focus = true;
     level = Level_Sequence[index];
     map_size.x = 1 + level.width * CELL_WIDTH + level.width;
     map_size.y = 2 + level.height * CELL_WIDTH + level.height;
@@ -406,7 +410,10 @@ simulate_level :: () {
 }
 
 simulate_level_completion :: () {
-
+    if input.clicked {
+        game.level_index += 1;
+        load_level(game.level_index);
+    }
 }
 
 render_level_select :: () {
@@ -481,7 +488,7 @@ render_level :: () {
 
         color := DARKGRAY;
         if deck.count > 0 {
-            if is_mouse_over(DECK_POS, CARD_SIZE) then color = WHITE;
+            if level_has_focus && is_mouse_over(DECK_POS, CARD_SIZE) then color = WHITE;
             else color = LIGHTGRAY;
         }
         DrawRectangleV(DECK_POS, xy(185, 250), color);
@@ -496,19 +503,19 @@ render_level :: () {
         color0 := DARKGRAY;
         if hand[0].exists {
             color0 = LIGHTGRAY;
-            if is_mouse_over(HAND_POS[0], CARD_SIZE) then color0 = WHITE;
+            if level_has_focus && is_mouse_over(HAND_POS[0], CARD_SIZE) then color0 = WHITE;
         }
 
         color1 := DARKGRAY;
         if hand[1].exists {
             color1 = LIGHTGRAY;
-            if is_mouse_over(HAND_POS[1], CARD_SIZE) then color1 = WHITE;
+            if level_has_focus && is_mouse_over(HAND_POS[1], CARD_SIZE) then color1 = WHITE;
         }
 
         color2 := DARKGRAY;
         if hand[2].exists  {
             color2 = LIGHTGRAY;
-            if is_mouse_over(HAND_POS[2], CARD_SIZE) then color2 = WHITE;
+            if level_has_focus && is_mouse_over(HAND_POS[2], CARD_SIZE) then color2 = WHITE;
         }
 
         if highlighted_card > -1 {
@@ -557,9 +564,18 @@ render_level :: () {
     for _Door render(it);
     if door_placement DrawRectangleV(door_ghost.position, door_ghost.size, .{0, 0, 255, 100});
 
-    DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
+    if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 }
 
 render_level_completion :: () {
+    using game;
+    using context.entity_storage;
 
+    render_level();
+
+    DrawRectangle(50, 50, WINDOW_WIDTH-100, WINDOW_HEIGHT-100, Color.{155, 155, 155, 200});
+    text := temp_c_string(tprint("YOU BEAT LEVEL %", level_index+1));
+    measure := MeasureTextEx(Fonts.bahnschrift, text, 64, 1);
+    DrawTextPro(Fonts.bahnschrift, text, xy(54, 54) + xy(WINDOW_WIDTH-100, WINDOW_HEIGHT-100)/2 + xy(measure.x/2, measure.y/2), xx measure, 0.0, 64, 1, BLACK);
+    DrawTextPro(Fonts.bahnschrift, text, xy(50, 50) + xy(WINDOW_WIDTH-100, WINDOW_HEIGHT-100)/2 + xy(measure.x/2, measure.y/2), xx measure, 0.0, 64, 1, WHITE);
 }
