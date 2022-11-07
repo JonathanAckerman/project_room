@@ -1,7 +1,8 @@
-CELL_WIDTH :: 29.0;
-CELL_SIZE  :: Vector2.{CELL_WIDTH, CELL_WIDTH};
-GRID_WIDTH :: 41;
+CELL_WIDTH  :: 29.0;
+CELL_SIZE   :: Vector2.{CELL_WIDTH, CELL_WIDTH};
+GRID_WIDTH  :: 41;
 GRID_HEIGHT :: 35;
+GRID_SIZE   :: Vector2.{1 + GRID_WIDTH * (CELL_WIDTH+1), 1 + GRID_HEIGHT * (CELL_WIDTH+1)};
 
 CARD_WIDTH :: 185;
 CARD_HEIGHT :: 250;
@@ -10,7 +11,6 @@ CARD_SIZE :: Vector2.{CARD_WIDTH, CARD_HEIGHT};
 DECK_POS  :: Vector2.{1505, 100};
 HAND_POS :: Vector2.[.{1310, 700}, .{1505, 700}, .{1700, 700}];
 
-MAP_TOP_LEFT :: Vector2.{94, 95};
 SIDEBAR_LEFT :: 1 + (CELL_WIDTH + 1) * GRID_WIDTH;
 
 game: struct {
@@ -38,6 +38,7 @@ game: struct {
     highlighted_card := -1;
 
     is_map_hovered: bool;
+    map_top_left: Vector2;
     map_size: Vector2;
 
     is_first_placement := true;
@@ -113,7 +114,7 @@ is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
 }
 
 get_cell_index :: (point: Vector2) -> int, int{
-    map_coord := point - MAP_TOP_LEFT - xy(1,2);
+    map_coord := point - game.map_top_left - xy(1,2);
     x := cast(int) (map_coord.x / (CELL_WIDTH + 1));
     y := cast(int) (map_coord.y / (CELL_WIDTH + 1));
 
@@ -123,8 +124,8 @@ get_cell_index :: (point: Vector2) -> int, int{
 }
 
 get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
-    x := MAP_TOP_LEFT.x + x_index * (CELL_WIDTH + 1);
-    y := MAP_TOP_LEFT.y + y_index * (CELL_WIDTH + 1);
+    x := game.map_top_left.x + x_index * (CELL_WIDTH + 1);
+    y := game.map_top_left.y + y_index * (CELL_WIDTH + 1);
     return xy(x, y);
 }
 

@@ -35,8 +35,8 @@ Levels: struct {
         ],
     };
     TUTORIAL_2 :: Level.{
-        width=10,
-        height=10,
+        width=11,
+        height=11,
         room_cards=.[
             Cards.R33,
             Cards.R33,
@@ -50,7 +50,7 @@ Levels: struct {
         ],
     };
     TUTORIAL_3 :: Level.{
-        width=12,
+        width=13,
         height=3,
         room_cards=.[
             Cards.R11,
@@ -74,8 +74,8 @@ Levels: struct {
         ],
     };
     TUTORIAL_4 :: Level.{
-        width=30,
-        height=30,
+        width=31,
+        height=31,
         room_cards=.[
             Cards.R11,
             Cards.R11,
@@ -124,7 +124,7 @@ simulate_level :: () {
         reset_highlight := true;
 
         // map clicked
-        if is_mouse_over(MAP_TOP_LEFT, map_size) {
+        if is_mouse_over(game.map_top_left, map_size) {
             if phase == .DOOR_PLACEMENT {
                 cell_x, cell_y := get_cell_index(input.mouse_position);
                 print("door attempted: %, %\n", cell_x, cell_y);
@@ -222,7 +222,7 @@ simulate_level :: () {
         }
     }
 
-    if is_mouse_over(MAP_TOP_LEFT, map_size) {
+    if is_mouse_over(game.map_top_left, map_size) {
         if phase == .DOOR_PLACEMENT {
             cell_x, cell_y := get_cell_index(input.mouse_position);
             room, gone := from_handle(door_ghost.room);
@@ -280,9 +280,8 @@ render_level :: () {
     //
     for i: 0..GRID_WIDTH-1 {
         for j: 0..GRID_HEIGHT-1 {
-            pos := xy(1 + i * CELL_WIDTH + i, 2 + j * CELL_WIDTH + j);
-            color := ifx i == GRID_WIDTH/2 || j == 31 then WHITE else DARKGRAY;
-            DrawRectangleV(pos, CELL_SIZE, color);
+            pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
+            DrawRectangleV(pos, CELL_SIZE, DARKGRAY);
         }
     }
 
@@ -291,11 +290,10 @@ render_level :: () {
     //
     {
         using game.level;
-        cell_offset :: 3;
-        pixel_offset :: cell_offset * CELL_WIDTH + 3;
         for i: 0..width-1 {
             for j: 0..height-1 {
-                pos := xy(1 + pixel_offset + i * CELL_WIDTH + i, 2 + pixel_offset + j * CELL_WIDTH + j);
+                // pos := xy(1 + pixel_offset + i * CELL_WIDTH + i, 2 + pixel_offset + j * CELL_WIDTH + j);
+                pos := game.map_top_left + xy(i * CELL_WIDTH + i, j * CELL_WIDTH + j);
                 DrawRectangleV(pos, CELL_SIZE, GRAY);
             }
         }
@@ -311,12 +309,12 @@ render_level :: () {
 }
 
 check_level_success :: (force_success: bool = false) {
-    // beat_level := game.level.deck.count == 0 && game.count_hand() == 0;
-    // if force_success || beat_level {
-    //     game.state = .LEVEL_COMPLETION;
-    //     game.level_has_focus = false;
-    //     game.highlighted_card = -1;
-    // }
+    beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
+    if force_success || beat_level {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+    }
 }
 
 // @@@: rework this, eg: hand should maybe be separate struct from game
@@ -333,9 +331,14 @@ load_level :: (index: int) {
 
     level_has_focus = true;
     level = Level_Sequence[index];
+
     print("LOADING LEVEL %\n", index+1);
+    assert(level.width <= GRID_WIDTH && level.height <= GRID_HEIGHT, "\nGrid dimensions: %,%\nMax dimensions:  %,%", GRID_WIDTH, GRID_HEIGHT, level.width, level.height);
+    assert(level.width % 2 == 1 && level.height % 2 == 1, "\nSince we want to center the map on an odd size grid, the dimensions of the map should also be odd");
+
     map_size.x = 1 + level.width * CELL_WIDTH + level.width;
-    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
+    map_size.y = 1 + level.height * CELL_WIDTH + level.height;
+    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
     for context.entity_storage._Room {
         despawn(it);
     }
