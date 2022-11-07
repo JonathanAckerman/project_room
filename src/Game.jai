@@ -22,6 +22,7 @@ game: struct {
 
     level: Level;
     level_index: int;
+    level_has_focus: bool;
 
     room_deck: [..] Handle(Card);
     door_deck: [..] Handle(Card);
@@ -36,19 +37,10 @@ game: struct {
         return count;
     }
     highlighted_card := -1;
+    is_first_placement := true;
 
-    is_map_hovered: bool;
     map_top_left: Vector2;
     map_size: Vector2;
-
-    is_first_placement := true;
-    door_ghost: struct {
-        room: Handle(Room);
-        position: Vector2;
-        size: Vector2;
-    }
-
-    level_has_focus: bool;
 }
 
 Game_State :: enum {
@@ -106,13 +98,6 @@ game_reset :: () {
     frame = .{};
 }
 
-is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
-    return (input.mouse_position.x >= topleft.x && 
-            input.mouse_position.x <= topleft.x + size.x &&
-            input.mouse_position.y >= topleft.y && 
-            input.mouse_position.y <= topleft.y + size.y);
-}
-
 get_cell_index :: (point: Vector2) -> int, int{
     map_coord := point - game.map_top_left - xy(1,2);
     x := cast(int) (map_coord.x / (CELL_WIDTH + 1));
@@ -129,7 +114,7 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     return xy(x, y);
 }
 
-is_valid_placement :: (x: int, y: int, room: Room) -> bool {
+is_valid_placement :: (using room: Room) -> bool {
     fits_horizontally := x + room.width <= game.level.width;
     fits_vertically   := y + room.height <= game.level.height;
     if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
@@ -159,6 +144,49 @@ is_valid_placement :: (x: int, y: int, room: Room) -> bool {
                     return true;
                 }
             }
+        }
+    }
+    return false;
+}
+
+is_valid_placement :: (using door: Door) -> bool {
+    using context.entity_storage;
+
+    // door is outside of map
+    if x < 0 || x > game.level.width 
+    || y < 0 || y > game.level.height return false;
+
+    // door already exists there
+    for _Door {
+        if it.x == x && it.y == y && it.alignment == alignment return false;
+    }
+
+    // @Note: there can be incosistency when mixing is_mouse_over and get_cell_index for border conditions
+    //        thus we use cell index to match the alignment logic in draw_ghost
+
+    room := room_at_coord(x, y);
+    if room {
+        neighbor_x := x;
+        neighbor_y := y;
+        if alignment == {
+            case .NORTH;
+                neighbor_y -= 1;
+            case .EAST;
+                neighbor_x += 1;
+            case .SOUTH;
+                neighbor_y += 1;
+            case .WEST;
+                neighbor_x -= 1;
+        }
+        neighbor := room_at_coord(neighbor_x, neighbor_y);
+        if neighbor && neighbor != room {
+            // door already exists there (but is in neighbor cell)
+            for _Door {
+                same_cell := it.x == neighbor_x && it.y == neighbor_y;
+                same_alignment := (cast(int) it.alignment + 2) % 4 == cast(int) alignment;
+                if same_cell && same_alignment return false;
+            }
+            return true;
         }
     }
     return false;

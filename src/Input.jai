@@ -35,3 +35,10 @@ handle_input :: () {
         game.intended_cursor = .CROSSHAIR;
     }
 }
+
+is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
+    return (input.mouse_position.x >= topleft.x && 
+            input.mouse_position.x <= topleft.x + size.x &&
+            input.mouse_position.y >= topleft.y && 
+            input.mouse_position.y <= topleft.y + size.y);
+}

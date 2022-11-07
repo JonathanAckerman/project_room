@@ -5,6 +5,7 @@ Card :: struct {
     type: Card_Type;
     using data: union {
         room: Room;
+        door: Door;
     }
 }
 
@@ -15,6 +16,7 @@ Card_Type :: enum {
 
 // Archetypes ---------------------------------------------------------------------
 Cards: struct {
+    // Rooms ----------------------------------------------------------------------
     R11 :: Card.{
         type=.ROOM,
         room=Room.{
@@ -192,6 +194,20 @@ Cards: struct {
         room=Room.{
             width =5,
             height=4,
+        }
+    };
+
+    // Doors ----------------------------------------------------------------------
+    D1 :: Card.{
+        type=.DOOR,
+        door=Door.{
+            width=1,
+        }
+    };
+    D2 :: Card.{
+        type=.DOOR,
+        door=Door.{
+            width=2,
         }
     };
 }

@@ -3,7 +3,6 @@ Room :: struct {
     width:      int; // # cells
     height:     int; // # cells
     type:       Room_Type;
-    is_placed:  bool;
     using cell_coord: struct {
         x: int;
         y: int;
@@ -19,33 +18,30 @@ Room_Type :: enum {
     EMPTY;
 }
 
-simulate :: (using room: *Room) {
-
-}
-
 render :: (using room: *Room) {
     size := xy(width * CELL_WIDTH + (width - 1), height * CELL_WIDTH + (height - 1));
     color := YELLOW;
     DrawRectangleV(position, size, color);
 }
 
-draw_room_ghost :: (room: *Room, position: Vector2) {
+draw_room_ghost :: (room: *Room) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
     color.a = 100;
 
-    x, y := get_cell_index(position);
+    x, y := get_cell_index(input.mouse_position);
     room.x = x;
     room.y = y;
 
-    if is_valid_placement(x, y, room) {
+    if is_valid_placement(room) {
         DrawRectangleV(get_cell_position(x, y), size, color);
-        game.intended_cursor = .POINTING_HAND; // @Jank: drawing a ghost shouldnt set the cursor
+        game.intended_cursor = .POINTING_HAND;
     } else {
-        DrawRectangleV(position, size, color);
+        DrawRectangleV(input.mouse_position - size/2, size, color);
         game.intended_cursor = .NOT_ALLOWED;
     }
 }
+
 draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
@@ -58,4 +54,20 @@ draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
             DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
         }
     }
+}
+
+room_at_coord :: (x: int, y: int) -> *Room {
+    for context.entity_storage._Room {
+        for i: 0..it.width-1 {
+            for j: 0..it.height-1 {
+                cell_x := it.x + i;
+                cell_y := it.y + j;
+
+                if x == cell_x && y == cell_y {
+                    return it;
+                }
+            }
+        }
+    }
+    return null;
 }
