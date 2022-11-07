@@ -96,8 +96,6 @@ game_reset :: () {
 
     game = .{};
     frame = .{};
-
-    load_level(0);
 }
 
 is_mouse_over :: (topleft: Vector2, size: Vector2) -> bool {
@@ -169,13 +167,16 @@ check_level_success :: () {
 // @@@: rework this, eg: hand should maybe be separate struct from game
 load_level :: (index: int) {
     using game;
+    state = .LEVEL;
+    level_index = index;
+
     if index == Level_Sequence.count {
         print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
         game.resetting = true;
         return;
     }
 
-    level = Level_Sequence[level_index];
+    level = Level_Sequence[index];
     map_size.x = 1 + level.width * CELL_WIDTH + level.width;
     map_size.y = 2 + level.height * CELL_WIDTH + level.height;
     for context.entity_storage._Room {
@@ -211,12 +212,30 @@ shuffle :: (arr: [..] int) -> [..] int {
 }
 
 simulate_level_select :: () {
-    
+    tile_width :: 100;
+    gutter :: 50;
+    margin :: Vector2.{tile_width, tile_width};
+
+    pos := margin;
+    if input.clicked {
+        for i: 1..Level_Sequence.count {
+            if is_mouse_over(pos, xy(tile_width, tile_width)) {
+                load_level(i-1);
+                return;
+            }
+
+            pos += xy(tile_width + gutter, 0);
+            if i % 12 == 0 {
+                pos.x = margin.x;
+                pos.y += tile_width + gutter;
+            }
+        }
+    }
 }
 
 simulate_level :: () {
     using game;
-    
+
     if level.starting_rooms.count > 0 then is_first_placement = false;
 
     if input.clicked {
@@ -391,7 +410,35 @@ simulate_level_completion :: () {
 }
 
 render_level_select :: () {
-    
+    tile_width :: 100;
+    gutter :: 50;
+    margin :: Vector2.{tile_width, tile_width};
+
+    pos := margin;
+    for i: 1..Level_Sequence.count {
+        color := WHITE;
+        color2 := GRAY;
+
+        if is_mouse_over(pos, xy(tile_width, tile_width)) {
+            color = DARKGRAY;
+            color2 = WHITE;
+            DrawRectangle(xx pos.x, xx pos.y, 100, 100, color);
+        }
+        else {
+            DrawRectangleLines(xx pos.x, xx pos.y, 100, 100, color);
+        }
+
+        // label
+        label := temp_c_string(tprint("%", i));
+        measure := MeasureTextEx(Fonts.bahnschrift, label, 64, 1);
+        DrawTextPro(Fonts.bahnschrift, label, pos + xy(tile_width, tile_width)/2 + xy(measure.x/2, measure.y/2), xx measure, 0.0, 64, 1, color2);
+
+        pos += xy(tile_width + gutter, 0);
+        if i % 12 == 0 {
+            pos.x = margin.x;
+            pos.y += tile_width + gutter;
+        }
+    }
 }
 
 render_level :: () {
