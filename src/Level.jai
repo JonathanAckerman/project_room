@@ -303,6 +303,71 @@ render_level :: () {
             }
         }
     }
+
+    if state == .LEVEL then draw_level_sidebar();
+
+    for _Room render(it);
+    for _Door render(it);
+    if door_placement DrawRectangleV(door_ghost.position, door_ghost.size, .{0, 0, 255, 100});
+
+    if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
+}
+
+check_level_success :: (force_success: bool = false) {
+    beat_level := game.level.deck.count == 0 && game.count_hand() == 0;
+    if force_success || beat_level {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+    }
+}
+
+// @@@: rework this, eg: hand should maybe be separate struct from game
+load_level :: (index: int) {
+    using game;
+    state = .LEVEL;
+    level_index = index;
+
+    if index == Level_Sequence.count {
+        print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
+        game.state = .LEVEL_SELECT;
+        return;
+    }
+
+    level_has_focus = true;
+    level = Level_Sequence[index];
+    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
+    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
+    for context.entity_storage._Room {
+        despawn(it);
+    }
+    for context.entity_storage._Door {
+        despawn(it);
+    }
+    door_placement = false;
+    intended_cursor = .CROSSHAIR;
+    highlighted_card = -1;
+    is_first_placement = true;
+    for * hand it.exists = false;
+
+    // clean this up at some point
+    indices: [..] int;
+    for Decks[index] {
+        array_add(*indices, it_index);
+    }
+    for shuffle(indices) {
+        array_add(*level.deck, Decks[index][it]);
+    }
+
+    for level.starting_rooms {
+        room := it;
+        room.position = get_cell_position(it.cell_coord.x, it.cell_coord.y);
+        spawn(room);
+    }
+}
+
+draw_level_sidebar :: () {
+    using game;
     
     //
     // draw deck
@@ -384,64 +449,5 @@ render_level :: () {
         } else {
             intended_cursor = .CROSSHAIR;
         }
-    }
-
-    for _Room render(it);
-    for _Door render(it);
-    if door_placement DrawRectangleV(door_ghost.position, door_ghost.size, .{0, 0, 255, 100});
-
-    if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
-}
-
-check_level_success :: (force_success: bool = false) {
-    beat_level := game.level.deck.count == 0 && game.count_hand() == 0;
-    if force_success || beat_level {
-        game.state = .LEVEL_COMPLETION;
-        game.level_has_focus = false;
-        game.highlighted_card = -1;
-    }
-}
-
-// @@@: rework this, eg: hand should maybe be separate struct from game
-load_level :: (index: int) {
-    using game;
-    state = .LEVEL;
-    level_index = index;
-
-    if index == Level_Sequence.count {
-        print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
-        game.state = .LEVEL_SELECT;
-        return;
-    }
-
-    level_has_focus = true;
-    level = Level_Sequence[index];
-    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
-    map_size.y = 2 + level.height * CELL_WIDTH + level.height;
-    for context.entity_storage._Room {
-        despawn(it);
-    }
-    for context.entity_storage._Door {
-        despawn(it);
-    }
-    door_placement = false;
-    intended_cursor = .CROSSHAIR;
-    highlighted_card = -1;
-    is_first_placement = true;
-    for * hand it.exists = false;
-
-    // clean this up at some point
-    indices: [..] int;
-    for Decks[index] {
-        array_add(*indices, it_index);
-    }
-    for shuffle(indices) {
-        array_add(*level.deck, Decks[index][it]);
-    }
-
-    for level.starting_rooms {
-        room := it;
-        room.position = get_cell_position(it.cell_coord.x, it.cell_coord.y);
-        spawn(room);
     }
 }
