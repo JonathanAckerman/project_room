@@ -172,7 +172,7 @@ load_level :: (index: int) {
 
     if index == Level_Sequence.count {
         print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
-        game.resetting = true;
+        game.state = .LEVEL_SELECT;
         return;
     }
 

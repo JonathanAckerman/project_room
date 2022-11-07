@@ -17,13 +17,16 @@ handle_input :: () {
         game.resetting = true;
     }
     if IsKeyPressed(xx KeyboardKey.R) {
+        if game.state != .LEVEL return;
         load_level(game.level_index);
     }
     if IsKeyPressed(xx KeyboardKey.F11) {
+        if game.state != .LEVEL return;
         game.level_index += 1;
         load_level(game.level_index);
     }
     if IsKeyPressed(xx KeyboardKey.ESCAPE) {
+        if game.state != .LEVEL return;
         game.highlighted_card = -1;
         game.intended_cursor = .CROSSHAIR;
     }
