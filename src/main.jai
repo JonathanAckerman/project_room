@@ -26,6 +26,8 @@ Fonts: struct {
 #load "Entity.jai";
 #load "Input.jai";
 #load "Level.jai";
+#load "Level_Select.jai";
+#load "Level_Completion.jai";
 #load "Utils.jai";
 
 #import "Math";

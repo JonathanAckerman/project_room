@@ -21,8 +21,13 @@ handle_input :: () {
         load_level(game.level_index);
     }
     if IsKeyPressed(xx KeyboardKey.F11) {
-        if game.state != .LEVEL return;
-        check_level_success(true);
+        if game.state == .LEVEL {
+            check_level_success(true);
+        }
+        else if game.state == .LEVEL_COMPLETION {
+            game.level_index += 1;
+            load_level(game.level_index);
+        }
     }
     if IsKeyPressed(xx KeyboardKey.ESCAPE) {
         if game.state != .LEVEL return;
