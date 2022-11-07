@@ -23,10 +23,16 @@ game: struct {
     level: Level;
     level_index: int;
 
-    hand: [3] Hand_Slot;
+    room_deck: [..] Handle(Card);
+    door_deck: [..] Handle(Card);
+
+    player_room_deck: [..] Card;
+    player_door_deck: [..] Card;
+
+    hand: [3] Handle(Card);
     count_hand :: () -> int { 
         count := 0;
-        for game.hand { if it.exists then count += 1; }
+        for game.hand { if exists(it) then count += 1; }
         return count;
     }
     highlighted_card := -1;
@@ -35,7 +41,6 @@ game: struct {
     map_size: Vector2;
 
     is_first_placement := true;
-    door_placement := false;
     door_ghost: struct {
         room: Handle(Room);
         position: Vector2;
@@ -52,8 +57,8 @@ Game_State :: enum {
 }
 
 Game_Phase :: enum {
-    ROOM;
-    DOOR;
+    ROOM_PLACEMENT;
+    DOOR_PLACEMENT;
 }
 
 frame: struct {
@@ -129,10 +134,10 @@ is_valid_placement :: (x: int, y: int, room: Room) -> bool {
     if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
         overlaps_existing_room := false;
         for context.entity_storage._Room {
-            if x + room.width - 1 >= it.cell_coord.x 
-            && x < it.cell_coord.x + it.width
-            && y + room.height - 1 >= it.cell_coord.y 
-            && y < it.cell_coord.y + it.height {
+            if x + room.width - 1 >= it.x 
+            && x < it.x + it.width
+            && y + room.height - 1 >= it.y 
+            && y < it.y + it.height {
                 overlaps_existing_room = true;
                 break;
             }
@@ -156,8 +161,4 @@ is_valid_placement :: (x: int, y: int, room: Room) -> bool {
         }
     }
     return false;
-}
-
-shuffle :: (arr: [..] int) -> [..] int {
-    return fisher_yates_shuffle(arr);
 }

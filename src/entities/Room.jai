@@ -1,24 +1,19 @@
-Room_Prototype :: struct {
-    width: int;  // # cells
-    height: int; // # cells
-    type: Room_Type;
-}
-
 Room :: struct {
     using #as entity: Entity;
-    using #as room_prototype: Room_Prototype;
-
-    is_placed: bool;
-    cell_coord: struct {
+    width:      int; // # cells
+    height:     int; // # cells
+    type:       Room_Type;
+    is_placed:  bool;
+    using cell_coord: struct {
         x: int;
         y: int;
     };
 }
 
-left   :: (room) => room.cell_coord.x;
-right  :: (room) => room.cell_coord.x + room.width - 1;
-top    :: (room) => room.cell_coord.y;
-bottom :: (room) => room.cell_coord.y + room.height - 1;
+left   :: (room) => room.x;
+right  :: (room) => room.x + room.width - 1;
+top    :: (room) => room.y;
+bottom :: (room) => room.y + room.height - 1;
 
 Room_Type :: enum {
     EMPTY;
@@ -40,8 +35,8 @@ draw_room_ghost :: (room: *Room, position: Vector2) {
     color.a = 100;
 
     x, y := get_cell_index(position);
-    room.cell_coord.x = x;
-    room.cell_coord.y = y;
+    room.x = x;
+    room.y = y;
 
     if is_valid_placement(x, y, room) {
         DrawRectangleV(get_cell_position(x, y), size, color);
@@ -51,7 +46,7 @@ draw_room_ghost :: (room: *Room, position: Vector2) {
         game.intended_cursor = .NOT_ALLOWED;
     }
 }
-draw_room_representation :: (room: Room_Prototype, position: Vector2, opacity: u8) {
+draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
     color.a = opacity;
@@ -63,134 +58,4 @@ draw_room_representation :: (room: Room_Prototype, position: Vector2, opacity: u
             DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
         }
     }
-}
-
-// Archetypes -----------------------------------------------------------------------
-Rooms: struct {
-    // @@@: I maybe need to rethink this
-
-    //
-    // Squares
-    //
-    R11 :: Room_Prototype.{
-        width=1,
-        height=1,
-    };
-    R22 :: Room_Prototype.{
-        width=2,
-        height=2,
-    };
-    R33 :: Room_Prototype.{
-        width=3,
-        height=3,
-    };
-    R44 :: Room_Prototype.{
-        width=4,
-        height=4,
-    };
-    R55 :: Room_Prototype.{
-        width=5,
-        height=5,
-    };
-    
-    //
-    // 1xN
-    //
-    R12 :: Room_Prototype.{
-        width=1,
-        height=2,
-    };
-    R21 :: Room_Prototype.{
-        width=2,
-        height=1,
-    };
-    R13 :: Room_Prototype.{
-        width=1,
-        height=3,
-    };
-    R31 :: Room_Prototype.{
-        width=3,
-        height=1,
-    };
-    R14 :: Room_Prototype.{
-        width=1,
-        height=4,
-    };
-    R41 :: Room_Prototype.{
-        width=4,
-        height=1,
-    };
-    R15 :: Room_Prototype.{
-        width=1,
-        height=5,
-    };
-    R51 :: Room_Prototype.{
-        width=5,
-        height=1,
-    };
-    
-    //
-    // 2xN
-    //
-    R23 :: Room_Prototype.{
-        width=2,
-        height=3,
-    };
-    R32 :: Room_Prototype.{
-        width=3,
-        height=2,
-    };
-    R24 :: Room_Prototype.{
-        width=2,
-        height=4,
-    };
-    R42 :: Room_Prototype.{
-        width=4,
-        height=2,
-    };
-    R25 :: Room_Prototype.{
-        width=2,
-        height=5,
-    };
-    R52 :: Room_Prototype.{
-        width=5,
-        height=2,
-    };
-
-    //
-    // 3xN
-    //
-    R34 :: Room_Prototype.{
-        width=3,
-        height=4,
-    };
-    R43 :: Room_Prototype.{
-        width=4,
-        height=3,
-    };
-    R35 :: Room_Prototype.{
-        width=3,
-        height=5,
-    };
-    R53 :: Room_Prototype.{
-        width=5,
-        height=3,
-    };
-
-    //
-    // 4xN
-    //
-    R45 :: Room_Prototype.{
-        width=4,
-        height=5,
-    };
-    R54 :: Room_Prototype.{
-        width=5,
-        height=4,
-    };
-}
-
-Hand_Slot :: struct {
-    room: Room; // !!!: this might be real bad
-    exists: bool;
 }

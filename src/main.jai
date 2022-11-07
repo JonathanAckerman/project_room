@@ -18,6 +18,11 @@ main :: () {
     CloseWindow();
 }
 
+exists :: (using handle: Handle($T)) -> bool {
+    if id == 0 || ptr.despawning || ptr.id != id return false;
+    return true;
+}
+
 Fonts: struct {
     bahnschrift: Font;
 }

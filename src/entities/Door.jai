@@ -4,7 +4,7 @@ VERT_DOOR_SIZE :: Vector2.{5, CELL_WIDTH};
 Door :: struct {
     using #as entity: Entity;
     facing: Door_Facing;
-    cell_coord: struct {
+    using cell_coord: struct {
         x: int;
         y: int;
     };
@@ -20,7 +20,7 @@ Door_Facing :: enum {
 render :: (using door: *Door) {
     pos: Vector2;
     size: Vector2;
-    cell_center := get_cell_position(cell_coord.x, cell_coord.y) + CELL_SIZE/2.0;
+    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
     if facing == {
         case .NORTH;
             size = HORIZ_DOOR_SIZE;
