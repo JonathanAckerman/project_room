@@ -174,75 +174,53 @@ get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
 // is_valid_placement :: (using door: Door) -> bool {
     // using context.entity_storage;
 
-    // // door is outside of map
-    // if x < 0 || x > game.current_level_width
-    // || y < 0 || y > game.current_level_height return false;
-
-    // // door already exists there
-    // for _Door {
-    //     if it.x == x && it.y == y && it.alignment == alignment return false;
-    // }
-
-    // // @Note: there can be incosistency when mixing is_mouse_over and get_cell_index for border conditions
-    // //        thus we use cell index to match the alignment logic in draw_ghost
-
-    // room := room_at_coord(x, y);
-    // if room {
-    //     neighbor_x := x;
-    //     neighbor_y := y;
-    //     if alignment == {
-    //         case .NORTH;
-    //             neighbor_y -= 1;
-    //         case .EAST;
-    //             neighbor_x += 1;
-    //         case .SOUTH;
-    //             neighbor_y += 1;
-    //         case .WEST;
-    //             neighbor_x -= 1;
-    //     }
-    //     neighbor := room_at_coord(neighbor_x, neighbor_y);
-    //     if neighbor && neighbor != room {
-    //         // door already exists there (but is in neighbor cell)
-    //         for _Door {
-    //             same_cell := it.x == neighbor_x && it.y == neighbor_y;
-    //             same_alignment := (cast(int) it.alignment + 2) % 4 == cast(int) alignment;
-    //             if same_cell && same_alignment return false;
-    //         }
-    //         return true;
-    //     }
-    // }
-    // return false;
 // }
 
 is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, type: Card_Door_Type) -> bool {
-    return true;
+    using game;
+    // door is outside of map
+    if !is_on_map(x, y) return false;
+
+    cell := grid[y][x];
+    dir := direction_to_offset(direction);
+
+    // map boundary
+    if y == 0 && direction == .NORTH
+    || x == GRID_WIDTH - 1 && direction == .EAST
+    || y == GRID_WIDTH - 1 && direction == .SOUTH
+    || x == 0 && direction == .WEST
+        return false;
+
+    neighbor := grid[cast(int)dir.y + y][cast(int)dir.x + x];
+
+    // there is no room to attach to
+    if cell.room == .EMPTY && neighbor.room == .EMPTY return false;
+
+    // door already exists there
+    if cell.edges[cast(int) direction] == .DOOR return false;
+    if neighbor.edges[cast(int) direction] == .DOOR return false;
+
+    // there is no wall to replace
+    if neighbor.edges[cast(int) direction] != .WALL 
+    && cell.edges[cast(int) direction] != .WALL return false;
+
+    return true;    
 }
 
 grow_map :: () {
-    // using game;
-    // if current_level_width == GRID_WIDTH && current_level_height == GRID_HEIGHT return;
+    using game;
+    if current_level_width == GRID_WIDTH && current_level_height == GRID_HEIGHT return;
 
-    // old_level_width  := current_level_width;
-    // old_level_height := current_level_height;
-    // map_phase += 1;
-    // current_level_width  = level.width[map_phase];
-    // current_level_height = level.height[map_phase];
+    old_level_width  := current_level_width;
+    old_level_height := current_level_height;
+    map_phase += 1;
+    current_level_width  = level.width[map_phase];
+    current_level_height = level.height[map_phase];
 
-    // // recompute map size/position
-    // map_size.x = 1 + current_level_width * CELL_WIDTH + current_level_width;
-    // map_size.y = 1 + current_level_height * CELL_WIDTH + current_level_height;
-    // map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
-
-    // top_left_cell_displacement_x := ((current_level_width-1)/2) - ((old_level_width-1)/2);
-    // top_left_cell_displacement_y := ((current_level_height-1)/2) - ((old_level_height-1)/2);
-    // for context.entity_storage._Room {
-    //     it.x += top_left_cell_displacement_x;
-    //     it.y += top_left_cell_displacement_y;
-    // }
-    // for context.entity_storage._Door {
-    //     it.x += top_left_cell_displacement_x;
-    //     it.y += top_left_cell_displacement_y;
-    // }
+    // recompute map size/position
+    map_size.x = 1 + current_level_width * CELL_WIDTH + current_level_width;
+    map_size.y = 1 + current_level_height * CELL_WIDTH + current_level_height;
+    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
 }
 
 is_on_map :: (x: int, y: int) -> bool {

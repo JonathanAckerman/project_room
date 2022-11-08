@@ -37,6 +37,7 @@ Levels: struct {
 
             Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+            Cell.{.{0, 0}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
         ],
     };
 }
@@ -143,6 +144,10 @@ render_level :: () {
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
+
+            for cell.edges if it == .DOOR {
+                draw_door(i, j, cast(Direction) it_index);
+            }
         }
     }
 
@@ -160,17 +165,11 @@ render_level :: () {
                     pos := input.mouse_position;
                     direction := get_nearest_edge(x, y);
                     if is_valid_door_placement(x, y, direction, width, type) {
-                        cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
-                        offset := direction_to_offset(direction);
-                        edge := cell_center + offset * CELL_WIDTH/2;
-                        size := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
-                        pos = edge - size/2;
-                        if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
-                        draw_door_ghost(width, type, pos, size);
+                        draw_door(x, y, direction, 100);
                         intended_cursor = .POINTING_HAND;
                     }
                     else {
-                        draw_door_ghost(width, type, pos - HORIZ_DOOR_SIZE/2, HORIZ_DOOR_SIZE);
+                        draw_door(pos - HORIZ_DOOR_SIZE/2, 100);
                         intended_cursor = .NOT_ALLOWED;
                     }
             }
@@ -282,10 +281,22 @@ draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2
     DrawRectangleV(position, size, color);
 }
 
-draw_door_ghost :: (width: int, type: Card_Door_Type, position: Vector2, size: Vector2) {
+draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     color := BLUE;
-    color.a = 100;
-    DrawRectangleV(position, size, color);
+    color.a = opacity;
+    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
+    offset := direction_to_offset(direction);
+    edge := cell_center + offset * CELL_WIDTH/2;
+    size          := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
+    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(2,0) else xy(0,2);
+    pos := edge - size/2;
+    if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
+    DrawRectangleV(pos, size + gutter_offset, color);
+}
+draw_door :: (position: Vector2, opacity: u8 = 255) {
+    color := BLUE;
+    color.a = opacity;
+    DrawRectangleV(position, HORIZ_DOOR_SIZE, color);
 }
 
 get_nearest_edge :: (x: int, y: int) -> Direction {
