@@ -1,104 +1,42 @@
 Level :: struct {
     width:  [] int;
     height: [] int;
-    width_increment:  int;
-    height_increment: int;
-    room_cards: [] Card;
-    door_cards: [] Card;
-    starting_rooms: [] Room; // should this be Room_Prototype?
+    cards:  [] Card;
+    starting_cells: [] Cell;
 }
-
-Level_Sequence: [4] Level = .[
-    Levels.TUTORIAL_1,
-    Levels.TUTORIAL_2,
-    Levels.TUTORIAL_3,
-    Levels.TUTORIAL_4,
-];
 
 #run {
-    for Level_Sequence {
-        assert(it.room_cards.count % 3 == 0, "Level % has the wrong # of room cards\n", it_index+1);
-        assert(it.door_cards.count % 3 == 0, "Level % has the wrong # of door cards\n", it_index+1);
-    }
+    for Level_Sequence assert(it.cards.count % 3 == 0);
 }
+
+Level_Sequence: [1] Level = .[
+    Levels.TUTORIAL_1,
+    // Levels.TUTORIAL_2,
+    // Levels.TUTORIAL_3,
+    // Levels.TUTORIAL_4,
+];
 
 // Archetypes -----------------------------------------------------------------------
 Levels: struct {
     TUTORIAL_1 :: Level.{
         width= .[5, 9, 15, GRID_WIDTH],
         height=.[5, 9, 15, GRID_HEIGHT],
-        room_cards=.[
+        cards=.[
             Cards.R11,
             Cards.R11,
-            Cards.R21,
-            Cards.R21,
-            Cards.R41,
-            Cards.R41,
-        ],
-        door_cards=.[
-            Cards.D1,
+            Cards.R22,
+            Cards.R22,
             Cards.D1,
             Cards.D1,
         ],
-        starting_rooms=.[
-            Room.{width=2, height=2, cell_coord=.{1, 1}},
-        ],
-    };
-    TUTORIAL_2 :: Level.{
-        width= .[5, 9, 15, GRID_WIDTH],
-        height=.[5, 9, 15, GRID_HEIGHT],
-        room_cards=.[
-            Cards.R33,
-            Cards.R33,
-            Cards.R33,
-            Cards.R44,
-            Cards.R44,
-            Cards.R55,
-        ],
-        starting_rooms=.[
-            Room.{width=4, height=1, cell_coord=.{3, 3}},
-        ],
-    };
-    TUTORIAL_3 :: Level.{
-        width= .[5, 9, 15, GRID_WIDTH],
-        height=.[5, 9, 15, GRID_HEIGHT],
-        room_cards=.[
-            Cards.R11,
-            Cards.R11,
-            Cards.R12,
-            Cards.R12,
-            Cards.R12,
-            Cards.R13,
-            Cards.R13,
-            Cards.R21,
-            Cards.R21,
-            Cards.R41,
-            Cards.R41,
-            Cards.R51,
-        ],
-        starting_rooms=.[
-            Room.{width=1, height=2, cell_coord=.{2, 1}},
-        ],
-    };
-    TUTORIAL_4 :: Level.{
-        width= .[5, 9, 15, GRID_WIDTH],
-        height=.[5, 9, 15, GRID_HEIGHT],
-        room_cards=.[
-            Cards.R11,
-            Cards.R11,
-            Cards.R12,
-            Cards.R12,
-            Cards.R12,
-            Cards.R13,
-            Cards.R13,
-            Cards.R21,
-            Cards.R21,
-            Cards.R41,
-            Cards.R41,
-            Cards.R51,
-        ],
-        starting_rooms=.[
-            Room.{width=1, height=2, cell_coord=.{2, 1}},
+        starting_cells=.[
+            Cell.{.{1, 1}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .WALL]},
+            Cell.{.{2, 1}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .EMPTY]},
+            Cell.{.{1, 2}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .WALL]},
+            Cell.{.{2, 2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .EMPTY]},
+
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
         ],
     };
 }
@@ -106,22 +44,13 @@ Levels: struct {
 simulate_level :: () {
     using game;
 
-    if level.starting_rooms.count > 0 then is_first_placement = false;
+    if level.starting_cells.count > 0 then is_first_placement = false;
 
     // deal cards
     hand_count := count_hand();
-    if hand_count == 0 {
-        deck: *[..] Handle(Card);
-        if phase == {
-            case .ROOM_PLACEMENT;
-                deck = *room_deck;
-            case .DOOR_PLACEMENT;
-                deck = *door_deck;
-        }
-        if deck.count > 0 {
-            for i: 0..2 {
-                hand[i] = pop(deck);
-            }
+    if hand_count == 0 && deck.count > 0 {
+        for i: 0..2 {
+            hand[i] = pop(*deck);
         }
     }
 
@@ -129,31 +58,24 @@ simulate_level :: () {
         reset_highlight := true;
         // map clicked
         if is_mouse_over(game.map_top_left, map_size) && highlighted_card > -1 {
-            if phase == {
-                case .DOOR_PLACEMENT;
-                    card, gone := from_handle(hand[highlighted_card]);
-                    if !gone {
-                        if is_valid_placement(card.door) {
-                            spawn(card.door);
-                            despawn(card);
-                            if count_hand() == 0 {
-                                phase = .ROOM_PLACEMENT;
-                                grow_map();
-                            }
+            card, gone := from_handle(hand[highlighted_card]);
+            if !gone {
+                if card.type == {
+                    case .MIXED;
+                    case .DOOR;
+                        x, y := get_cell_index(input.mouse_position);
+                        direction := get_nearest_edge(x, y);
+                        if is_valid_door_placement(x, y, direction, card.door.width, card.door.type) {
+                            grid[y][x].edges[cast(int) direction] = .DOOR;
                         }
-                        else reset_highlight = false;
-                    }
-                case .ROOM_PLACEMENT;
-                    card, gone := from_handle(hand[highlighted_card]);
-                    if !gone {
-                        if is_valid_placement(card.room) {
-                            card.room.position = get_cell_position(card.room.x, card.room.y);
-                            spawn(card.room);
-                            despawn(card);
-                            if count_hand() == 0 then phase = .DOOR_PLACEMENT;
-                        }
-                        else reset_highlight = false;
-                    }
+                }
+                // if is_valid_placement(card.room) {
+                //     card.room.position = get_cell_position(card.room.x, card.room.y);
+                //     spawn(card.room);
+                //     despawn(card);
+                //     if count_hand() == 0 then phase = .DOOR_PLACEMENT;
+                // }
+                // else reset_highlight = false;
             }
         }
         
@@ -194,13 +116,30 @@ render_level :: () {
     //
     // draw grid cells
     //
-    for i: 0..GRID_WIDTH-1 {
-        for j: 0..GRID_HEIGHT-1 {
+    for j: 0..GRID_HEIGHT-1 {
+        for i: 0..GRID_WIDTH-1 {
             // out of vision
             color := Color.{10, 10, 10, 255};
             
-            if is_on_map(i, j) then color = GRAY;
-            else if is_in_vision(i, j) then color = DARKGRAY;
+            cell := grid[j][i];
+            if is_on_map(i, j) {
+                if cell.room == {
+                    case .EMPTY;
+                        color = GRAY;
+                    case .BLANK_ROOM;
+                        color = YELLOW;
+                }
+            }
+            else if is_in_vision(i, j) {
+                if cell.room == {
+                    case .EMPTY;
+                        color = DARKGRAY;
+                    case .BLANK_ROOM;
+                        color = YELLOW;
+                        color.r -= 120;
+                        color.g -= 120;
+                }
+            }
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
@@ -209,18 +148,31 @@ render_level :: () {
 
     if state == .LEVEL then draw_level_sidebar();
 
-    for _Room { if is_in_vision(it.x, it.y) then render(it); }
-    for _Door { if is_in_vision(it.x, it.y) then render(it); }
-
     // draw ghosts
     if highlighted_card > -1 {
         card, gone := from_handle(hand[highlighted_card]);
         if !gone {
-            if phase == {
-                case .ROOM_PLACEMENT;
-                    draw_room_ghost(*card.room);
-                case .DOOR_PLACEMENT;
-                    draw_door_ghost(*card.door);
+            if card.type == {
+                case .MIXED;
+                case .DOOR;
+                    using card.door;
+                    x, y := get_cell_index(input.mouse_position);
+                    pos := input.mouse_position;
+                    direction := get_nearest_edge(x, y);
+                    if is_valid_door_placement(x, y, direction, width, type) {
+                        cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
+                        offset := direction_to_offset(direction);
+                        edge := cell_center + offset * CELL_WIDTH/2;
+                        size := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
+                        pos = edge - size/2;
+                        if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
+                        draw_door_ghost(width, type, pos, size);
+                        intended_cursor = .POINTING_HAND;
+                    }
+                    else {
+                        draw_door_ghost(width, type, pos - HORIZ_DOOR_SIZE/2, HORIZ_DOOR_SIZE);
+                        intended_cursor = .NOT_ALLOWED;
+                    }
             }
         }
     }
@@ -232,19 +184,14 @@ draw_level_sidebar :: () {
     using game;
 
     //
-    // draw decks
+    // draw deck
     //
     {
         using game.level;
 
-        color := ifx room_deck.count == 0 then DARKGRAY else LIGHTGRAY;
+        color := ifx cards.count == 0 then DARKGRAY else LIGHTGRAY;
         pos := xy(SIDEBAR_LEFT + 50, 100);
-        DrawTextEx(Fonts.bahnschrift, "Room Deck", pos - xy(0, 50), 32, 1, WHITE);
-        DrawRectangleV(pos, CARD_SIZE, color);
-
-        pos.x += CARD_WIDTH + 50;
-        DrawTextEx(Fonts.bahnschrift, "Door Deck", pos - xy(0, 50), 32, 1, WHITE);
-        color = ifx door_deck.count == 0 then DARKGRAY else LIGHTGRAY;
+        DrawTextEx(Fonts.bahnschrift, "Deck", pos - xy(0, 50), 32, 1, WHITE);
         DrawRectangleV(pos, CARD_SIZE, color);
     }
 
@@ -292,51 +239,84 @@ draw_level_sidebar :: () {
         if !gone {
             card_center := HAND_POS[0] + CARD_SIZE/2.0;
             if card.type == {
-                case .ROOM;
-                    room := card.room;
-                    room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0);
+                case .MIXED;
+                    // room := card.room;
+                    // room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+                    // draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
-                    draw_door_representation(card.door, card_center - xy(50, 15));
+                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
         }
         card, gone = from_handle(hand[1]);
         if !gone {
             card_center := HAND_POS[1] + CARD_SIZE/2.0;
             if card.type == {
-                case .ROOM;
-                    room := card.room;
-                    room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0);
+                case .MIXED;
+                    // room := card.room;
+                    // room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+                    // draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
-                    draw_door_representation(card.door, card_center - xy(50, 15));
+                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
         }
         card, gone = from_handle(hand[2]);
         if !gone {
             card_center := HAND_POS[2] + CARD_SIZE/2.0;
             if card.type == {
-                case .ROOM;
-                    room := card.room;
-                    room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0);
+                case .MIXED;
+                    // room := card.room;
+                    // room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
+                    // draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
-                    draw_door_representation(card.door, card_center - xy(50, 15));
+                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
         }
     }
 }
 
-check_level_success :: (force_success: bool = false) {
-    beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
-    if force_success || beat_level {
-        game.state = .LEVEL_COMPLETION;
-        game.level_has_focus = false;
-        game.highlighted_card = -1;
-    }
+draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2, opacity: u8 = 255) {
+    size := xy(100, 30);
+    color := BLUE;
+    color.a = opacity;
+
+    DrawRectangleV(position, size, color);
 }
 
-// @@@: rework this, eg: hand should maybe be separate struct from game
+draw_door_ghost :: (width: int, type: Card_Door_Type, position: Vector2, size: Vector2) {
+    color := BLUE;
+    color.a = 100;
+    DrawRectangleV(position, size, color);
+}
+
+get_nearest_edge :: (x: int, y: int) -> Direction {
+    // find the nearest edge for the cell containing the mouse
+    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
+    edges: [4] Vector2;
+    edges[0] = cell_center - xy(0, CELL_WIDTH/2.0); // North
+    edges[1] = cell_center + xy(CELL_WIDTH/2.0, 0); // East
+    edges[2] = cell_center + xy(0, CELL_WIDTH/2.0); // South
+    edges[3] = cell_center - xy(CELL_WIDTH/2.0, 0); // West
+    min_dist: float = distance(input.mouse_position, edges[0]);
+    min_index: int;
+    for edges {
+        dist := distance(input.mouse_position, it);
+        if dist < min_dist {
+            min_dist = dist;
+            min_index = it_index;
+        }
+    }
+    return cast(Direction) min_index;
+}
+
+check_level_success :: (force_success: bool = false) {
+    // beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
+    // if force_success || beat_level {
+    //     game.state = .LEVEL_COMPLETION;
+    //     game.level_has_focus = false;
+    //     game.highlighted_card = -1;
+    // }
+}
+
 load_level :: (index: int) {
     using game;
     state = .LEVEL;
@@ -359,12 +339,7 @@ load_level :: (index: int) {
     map_size.x = 1 + level.width[0] * CELL_WIDTH + level.width[0];
     map_size.y = 1 + level.height[0] * CELL_WIDTH + level.height[0];
     map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
-    for context.entity_storage._Room {
-        despawn(it);
-    }
-    for context.entity_storage._Door {
-        despawn(it);
-    }
+
     for context.entity_storage._Card {
         despawn(it);
     }
@@ -373,21 +348,16 @@ load_level :: (index: int) {
     highlighted_card = -1;
     is_first_placement = true;
 
-    deck: [..] Card;
-    for level.room_cards array_add(*deck, it);
-    for player_room_deck array_add(*deck, it);
-    fisher_yates_shuffle(*deck);
-    for deck array_add(*room_deck, spawn(it));
+    shuffle: [..] Card;
+    for level.cards array_add(*shuffle, it);
+    for player_deck array_add(*shuffle, it);
+    fisher_yates_shuffle(*shuffle);
+    for shuffle array_add(*deck, spawn(it));
 
-    array_reset(*deck);
-    for level.door_cards array_add(*deck, it);
-    for player_door_deck array_add(*deck, it);
-    fisher_yates_shuffle(*deck);
-    for deck array_add(*door_deck, spawn(it));
-
-    for level.starting_rooms {
-        room := it;
-        room.position = get_absolute_cell_position(it.x, it.y);
-        spawn(room);
+    for level.starting_cells {
+        grid[it.y][it.x] = it;
+        // room := it;
+        // room.position = get_absolute_cell_position(it.x, it.y);
+        // spawn(room);
     }
 }
