@@ -16,12 +16,15 @@ game: struct {
     resetting: bool;
     state: Game_State;
     phase: Game_Phase;
+    
     intended_cursor: MouseCursor = .CROSSHAIR;
     mouse_cursor: MouseCursor;
 
     level: Level;
     level_index: int;
     level_has_focus: bool;
+    current_level_width:  int;
+    current_level_height: int;
 
     room_deck: [..] Handle(Card);
     door_deck: [..] Handle(Card);
@@ -40,6 +43,7 @@ game: struct {
 
     map_top_left: Vector2;
     map_size: Vector2;
+    map_phase: int;
 }
 
 Game_State :: enum {
@@ -103,7 +107,7 @@ get_cell_index :: (point: Vector2) -> int, int{
     y := cast(int) (map_coord.y / (CELL_WIDTH + 1));
 
     if x < 0 || y < 0 return -1, -1;
-    if x >= game.level.width || y >= game.level.height return -1, -1;
+    if x >= game.current_level_width || y >= game.current_level_height return -1, -1;
     return x, y;
 }
 
@@ -114,8 +118,8 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
 }
 
 is_valid_placement :: (using room: Room) -> bool {
-    fits_horizontally := x + room.width <= game.level.width;
-    fits_vertically   := y + room.height <= game.level.height;
+    fits_horizontally := x + room.width <= game.current_level_width;
+    fits_vertically   := y + room.height <= game.current_level_height;
     if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
         overlaps_existing_room := false;
         for context.entity_storage._Room {
@@ -152,8 +156,8 @@ is_valid_placement :: (using door: Door) -> bool {
     using context.entity_storage;
 
     // door is outside of map
-    if x < 0 || x > game.level.width 
-    || y < 0 || y > game.level.height return false;
+    if x < 0 || x > game.current_level_width
+    || y < 0 || y > game.current_level_height return false;
 
     // door already exists there
     for _Door {
@@ -189,4 +193,31 @@ is_valid_placement :: (using door: Door) -> bool {
         }
     }
     return false;
+}
+
+grow_map :: () {
+    using game;
+    if current_level_width == GRID_WIDTH && current_level_height == GRID_HEIGHT return;
+
+    old_level_width  := current_level_width;
+    old_level_height := current_level_height;
+    map_phase += 1;
+    current_level_width  = level.width[map_phase];
+    current_level_height = level.height[map_phase];
+
+    // recompute map size/position
+    map_size.x = 1 + current_level_width * CELL_WIDTH + current_level_width;
+    map_size.y = 1 + current_level_height * CELL_WIDTH + current_level_height;
+    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
+
+    top_left_cell_displacement_x := ((current_level_width-1)/2) - ((old_level_width-1)/2);
+    top_left_cell_displacement_y := ((current_level_height-1)/2) - ((old_level_height-1)/2);
+    for context.entity_storage._Room {
+        it.x += top_left_cell_displacement_x;
+        it.y += top_left_cell_displacement_y;
+    }
+    for context.entity_storage._Door {
+        it.x += top_left_cell_displacement_x;
+        it.y += top_left_cell_displacement_y;
+    }
 }

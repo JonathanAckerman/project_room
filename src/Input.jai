@@ -20,6 +20,11 @@ handle_input :: () {
         if game.state != .LEVEL return;
         load_level(game.level_index);
     }
+    if IsKeyPressed(xx KeyboardKey.F10) {
+        if game.state == .LEVEL {
+            grow_map();
+        }
+    }
     if IsKeyPressed(xx KeyboardKey.F11) {
         if game.state == .LEVEL {
             check_level_success(true);

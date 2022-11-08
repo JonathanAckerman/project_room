@@ -1,6 +1,8 @@
 Level :: struct {
-    width: int;
-    height: int;
+    width:  [] int;
+    height: [] int;
+    width_increment:  int;
+    height_increment: int;
     room_cards: [] Card;
     door_cards: [] Card;
     starting_rooms: [] Room; // should this be Room_Prototype?
@@ -13,11 +15,18 @@ Level_Sequence: [4] Level = .[
     Levels.TUTORIAL_4,
 ];
 
+#run {
+    for Level_Sequence {
+        assert(it.room_cards.count % 3 == 0, "Level % has the wrong # of room cards\n", it_index+1);
+        assert(it.door_cards.count % 3 == 0, "Level % has the wrong # of door cards\n", it_index+1);
+    }
+}
+
 // Archetypes -----------------------------------------------------------------------
 Levels: struct {
     TUTORIAL_1 :: Level.{
-        width=5,
-        height=5,
+        width= .[5, 9, 15, GRID_WIDTH],
+        height=.[5, 9, 15, GRID_HEIGHT],
         room_cards=.[
             Cards.R11,
             Cards.R11,
@@ -36,8 +45,8 @@ Levels: struct {
         ],
     };
     TUTORIAL_2 :: Level.{
-        width=11,
-        height=11,
+        width= .[5, 9, 15, GRID_WIDTH],
+        height=.[5, 9, 15, GRID_HEIGHT],
         room_cards=.[
             Cards.R33,
             Cards.R33,
@@ -51,8 +60,8 @@ Levels: struct {
         ],
     };
     TUTORIAL_3 :: Level.{
-        width=13,
-        height=3,
+        width= .[5, 9, 15, GRID_WIDTH],
+        height=.[5, 9, 15, GRID_HEIGHT],
         room_cards=.[
             Cards.R11,
             Cards.R11,
@@ -72,8 +81,8 @@ Levels: struct {
         ],
     };
     TUTORIAL_4 :: Level.{
-        width=31,
-        height=31,
+        width= .[5, 9, 15, GRID_WIDTH],
+        height=.[5, 9, 15, GRID_HEIGHT],
         room_cards=.[
             Cards.R11,
             Cards.R11,
@@ -124,19 +133,20 @@ simulate_level :: () {
                 case .DOOR_PLACEMENT;
                     card, gone := from_handle(hand[highlighted_card]);
                     if !gone {
-                        assert(card.type == .DOOR, "Card must be a door card\n");
                         if is_valid_placement(card.door) {
                             print("pos at spawn: %\n", card.door.position);
                             spawn(card.door);
                             despawn(card);
-                            if count_hand() == 0 then phase = .ROOM_PLACEMENT;
+                            if count_hand() == 0 {
+                                phase = .ROOM_PLACEMENT;
+                                grow_map();
+                            }
                         }
                         else reset_highlight = false;
                     }
                 case .ROOM_PLACEMENT;
                     card, gone := from_handle(hand[highlighted_card]);
                     if !gone {
-                        assert(card.type == .ROOM, "Card must be a room card\n");
                         if is_valid_placement(card.room) {
                             card.room.position = get_cell_position(card.room.x, card.room.y);
                             spawn(card.room);
@@ -194,9 +204,9 @@ render_level :: () {
     // draw map
     //
     {
-        using game.level;
-        for i: 0..width-1 {
-            for j: 0..height-1 {
+        using game;
+        for i: 0..current_level_width-1 {
+            for j: 0..current_level_height-1 {
                 pos := game.map_top_left + xy(i * CELL_WIDTH + i, j * CELL_WIDTH + j);
                 DrawRectangleV(pos, CELL_SIZE, GRAY);
             }
@@ -346,13 +356,14 @@ load_level :: (index: int) {
 
     level_has_focus = true;
     level = Level_Sequence[index];
+    current_level_width  = level.width[0];
+    current_level_height = level.height[0];
 
     print("LOADING LEVEL %\n", index+1);
-    assert(level.width <= GRID_WIDTH && level.height <= GRID_HEIGHT, "\nGrid dimensions: %,%\nMax dimensions:  %,%", GRID_WIDTH, GRID_HEIGHT, level.width, level.height);
-    assert(level.width % 2 == 1 && level.height % 2 == 1, "\nSince we want to center the map on an odd size grid, the dimensions of the map should also be odd");
 
-    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
-    map_size.y = 1 + level.height * CELL_WIDTH + level.height;
+    map_phase = 0;
+    map_size.x = 1 + level.width[0] * CELL_WIDTH + level.width[0];
+    map_size.y = 1 + level.height[0] * CELL_WIDTH + level.height[0];
     map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
     for context.entity_storage._Room {
         despawn(it);
@@ -369,15 +380,12 @@ load_level :: (index: int) {
     is_first_placement = true;
 
     deck: [..] Card;
-    assert(level.room_cards.count % 3 == 0, "Level % has the wrong # of room cards\n", index+1);
-    assert(player_room_deck.count % 3 == 0, "Player has the wrong # of room cards\n");
     for level.room_cards array_add(*deck, it);
     for player_room_deck array_add(*deck, it);
     fisher_yates_shuffle(*deck);
     for deck array_add(*room_deck, spawn(it));
+
     array_reset(*deck);
-    assert(level.door_cards.count % 3 == 0, "Level % has the wrong # of door cards\n", index+1);
-    assert(player_door_deck.count % 3 == 0, "Player has the wrong # of door cards\n");
     for level.door_cards array_add(*deck, it);
     for player_door_deck array_add(*deck, it);
     fisher_yates_shuffle(*deck);
