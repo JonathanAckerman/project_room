@@ -134,7 +134,6 @@ simulate_level :: () {
                     card, gone := from_handle(hand[highlighted_card]);
                     if !gone {
                         if is_valid_placement(card.door) {
-                            print("pos at spawn: %\n", card.door.position);
                             spawn(card.door);
                             despawn(card);
                             if count_hand() == 0 {

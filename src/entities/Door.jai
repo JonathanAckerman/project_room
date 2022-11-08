@@ -19,24 +19,31 @@ Door_Alignment :: enum {
 }
 
 render :: (using door: *Door) {
-    pos: Vector2;
-    size: Vector2;
+    pos:    Vector2;
+    size:   Vector2;
+    gutter: Vector2;
     cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
-    if alignment == {
+    if alignment == {        
         case .NORTH;
-            size = HORIZ_DOOR_SIZE;
-            pos = cell_center - xy(size.x/2, CELL_WIDTH/2.0);
+            gutter = xy(0, -1);
+            size = HORIZ_DOOR_SIZE + xy(2, 0);
+            pos = cell_center - xy(0, CELL_WIDTH/2.0);
         case .EAST;
-            size = VERT_DOOR_SIZE;
-            pos = cell_center + xy(CELL_WIDTH/2.0, -size.y/2);
+            gutter = xy(1, 0);
+            size = VERT_DOOR_SIZE + xy(0, 2);
+            pos = cell_center + xy(CELL_WIDTH/2.0, 0);
         case .SOUTH;
-            size = HORIZ_DOOR_SIZE;
-            pos = cell_center + xy(-size.x/2, CELL_WIDTH/2.0);
+            gutter = xy(0, 0);
+            size = HORIZ_DOOR_SIZE + xy(2, 0);
+            pos = cell_center + xy(0, CELL_WIDTH/2.0);
         case .WEST;
-            size = VERT_DOOR_SIZE;
-            pos = cell_center - xy(CELL_WIDTH/2.0, -size.y/2);
+            gutter = xy(0, 0);
+            size = VERT_DOOR_SIZE + xy(0, 2);
+            pos = cell_center - xy(CELL_WIDTH/2.0, 0);
     }
-    DrawRectangleV(pos, size, BLUE);
+    pos -= size/2;
+    pos += gutter;
+    DrawRectangleV(pos, size, BLACK);
 }
 
 draw_door_ghost :: (door: *Door) {
@@ -76,7 +83,7 @@ draw_door_ghost :: (door: *Door) {
                 gutter = xy(1, 0);
                 size = VERT_DOOR_SIZE;
             case 2;
-                gutter = xy(0, 0); // for some reason SOUTH and WEST dont need gutter offsets to align
+                gutter = xy(0, 0);
             case 3;
                 gutter = xy(0, 0);
                 size = VERT_DOOR_SIZE;
@@ -84,7 +91,6 @@ draw_door_ghost :: (door: *Door) {
         position -= size/2;
         position += gutter;
         door.position = position;
-        print("ghost pos: %\n", door.position);
         DrawRectangleV(position, size, color);
         game.intended_cursor = .POINTING_HAND;
     } else {
