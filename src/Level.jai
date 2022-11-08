@@ -199,8 +199,8 @@ render_level :: () {
             // out of vision
             color := Color.{10, 10, 10, 255};
             
-            if is_on_map() then color = GRAY;
-            else if is_in_vision() then color = DARKGRAY;
+            if is_on_map(i, j) then color = GRAY;
+            else if is_in_vision(i, j) then color = DARKGRAY;
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
@@ -209,8 +209,8 @@ render_level :: () {
 
     if state == .LEVEL then draw_level_sidebar();
 
-    for _Room { if is_in_vision() then render(it); }
-    for _Door { if is_in_vision() then render(it); }
+    for _Room { if is_in_vision(it.x, it.y) then render(it); }
+    for _Door { if is_in_vision(it.x, it.y) then render(it); }
 
     // draw ghosts
     if highlighted_card > -1 {

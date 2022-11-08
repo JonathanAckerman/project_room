@@ -227,18 +227,19 @@ grow_map :: () {
     }
 }
 
-is_on_map :: () -> bool {
+is_on_map :: (x: int, y: int) -> bool {
     using game;
     map_left := (GRID_WIDTH-1)/2 - (current_level_width-1)/2;
     map_top  := (GRID_HEIGHT-1)/2 - (current_level_height-1)/2;
 
-    if i >= map_left && i < map_left + current_level_width
-    && j >= map_top && j < map_top + current_level_height
+    if x >= map_left && x < map_left + current_level_width
+    && y >= map_top && y < map_top + current_level_height
         return true;
     else return false;
 }
 
-is_in_vision :: (exclude_map: bool = false) -> bool {
+is_in_vision :: (x: int, y: int, exclude_map: bool = false) -> bool {
+    using game;
     vision_width  := ifx map_phase == level.width.count-1  then GRID_WIDTH  else level.width[map_phase+1];
     vision_height := ifx map_phase == level.height.count-1 then GRID_HEIGHT else level.height[map_phase+1];
     vision_left := (GRID_WIDTH-1)/2 - (vision_width-1)/2;
@@ -247,11 +248,11 @@ is_in_vision :: (exclude_map: bool = false) -> bool {
     map_left := ifx exclude_map then (GRID_WIDTH-1)/2 - (current_level_width-1)/2 else 0;
     map_top  := ifx exclude_map then (GRID_HEIGHT-1)/2 - (current_level_height-1)/2 else 0;
 
-    if i >= vision_left && i < vision_left + vision_width 
-    && j >= vision_top && j < vision_top + vision_height
+    if x >= vision_left && x < vision_left + vision_width 
+    && y >= vision_top && y < vision_top + vision_height
         if exclude_map {
-            if i >= map_left && i < map_left + current_level_width
-            && j >= map_top && j < map_top + current_level_height
+            if x >= map_left && x < map_left + current_level_width
+            && y >= map_top && y < map_top + current_level_height
                 return false; // in vision, but on map
             else return true; // in vision, and not on map
         }

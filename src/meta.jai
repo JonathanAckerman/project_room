@@ -4,6 +4,8 @@ USER_MODULES_PATH :: "../modules";
 ENTRY_POINT :: "src/main.jai";
 
 #run {
+    make_directory_if_it_does_not_exist("bin");
+
     w := compiler_create_workspace("Target Program");
     if !w { print("Workspace creation failed.\n"); return; }
 
@@ -35,3 +37,4 @@ ENTRY_POINT :: "src/main.jai";
 Entity_Storage :: #import "Entity_Storage"(BUILDING=true);
 #import "Basic";
 #import "Compiler";
+#import "File";
