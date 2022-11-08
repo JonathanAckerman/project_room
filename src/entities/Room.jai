@@ -42,7 +42,7 @@ draw_room_ghost :: (room: *Room) {
     }
 }
 
-draw_room_representation :: (room: Room, position: Vector2, opacity: u8) {
+draw_room_representation :: (room: Room, position: Vector2, opacity: u8 = 255) {
     size := xy(room.width * CELL_WIDTH + (room.width - 1), room.height * CELL_WIDTH + (room.height - 1));
     color := YELLOW;
     color.a = opacity;

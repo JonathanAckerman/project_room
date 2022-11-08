@@ -92,3 +92,11 @@ draw_door_ghost :: (door: *Door) {
         game.intended_cursor = .NOT_ALLOWED;
     }
 }
+
+draw_door_representation :: (door: Door, position: Vector2, opacity: u8 = 255) {
+    size := xy(100, 30);
+    color := BLUE;
+    color.a = opacity;
+
+    DrawRectangleV(position, size, color);
+}

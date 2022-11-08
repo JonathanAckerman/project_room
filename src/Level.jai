@@ -291,8 +291,9 @@ draw_level_sidebar :: () {
                 case .ROOM;
                     room := card.room;
                     room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0, 255);
+                    draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
+                    draw_door_representation(card.door, card_center - xy(50, 15));
             }
         }
         card, gone = from_handle(hand[1]);
@@ -302,8 +303,9 @@ draw_level_sidebar :: () {
                 case .ROOM;
                     room := card.room;
                     room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0, 255);
+                    draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
+                    draw_door_representation(card.door, card_center - xy(50, 15));
             }
         }
         card, gone = from_handle(hand[2]);
@@ -313,8 +315,9 @@ draw_level_sidebar :: () {
                 case .ROOM;
                     room := card.room;
                     room_size := xy(xx room.width * (CELL_WIDTH + 1), xx room.height * (CELL_WIDTH + 1));
-                    draw_room_representation(room, card_center - room_size/2.0, 255);
+                    draw_room_representation(room, card_center - room_size/2.0);
                 case .DOOR;
+                    draw_door_representation(card.door, card_center - xy(50, 15));
             }
         }
     }
