@@ -136,7 +136,24 @@ get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     return xy(x, y);
 }
 
-// is_valid_placement :: (using room: Room) -> bool {
+is_valid_placement :: (cells: [] Card_Cell) -> bool {
+    stamp_width := cast(int) sqrt(cast(float) cells.count);
+    pixel_width := CELL_WIDTH * stamp_width;
+    stamp_base_pos := input.mouse_position - xy(pixel_width/2, pixel_width/2);
+    x, y := get_cell_index(stamp_base_pos);
+
+    // base is off map
+    if x == -1 && y == -1 return false;
+
+    for cells {
+        // cell is off map
+        if !is_on_map(x + it.cell.x, y + it.cell.y) return false;
+        
+
+    }
+
+    return true;
+
     // fits_horizontally := x + room.width <= game.current_level_width;
     // fits_vertically   := y + room.height <= game.current_level_height;
     // if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
@@ -169,12 +186,7 @@ get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     //     }
     // }
     // return false;
-// }
-
-// is_valid_placement :: (using door: Door) -> bool {
-    // using context.entity_storage;
-
-// }
+}
 
 is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, type: Card_Door_Type) -> bool {
     using game;
@@ -255,3 +267,7 @@ is_in_vision :: (x: int, y: int, exclude_map: bool = false) -> bool {
         else return true; // in vision
     else return false; // out of vision
 }
+
+// get_nearest_cell :: (position: Vector2) -> int, int {
+//     return x, y;
+// }
