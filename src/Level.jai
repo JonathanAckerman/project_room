@@ -191,12 +191,6 @@ render_level :: () {
     using game;
     using context.entity_storage;
 
-    vision_width  := ifx map_phase == level.width.count-1  then GRID_WIDTH  else level.width[map_phase+1];
-    vision_height := ifx map_phase == level.height.count-1 then GRID_HEIGHT else level.height[map_phase+1];
-    vision_left := (GRID_WIDTH-1)/2 - (vision_width-1)/2;
-    vision_top  := (GRID_HEIGHT-1)/2 - (vision_height-1)/2;
-    map_left := (GRID_WIDTH-1)/2 - (current_level_width-1)/2;
-    map_top  := (GRID_HEIGHT-1)/2 - (current_level_height-1)/2;
     //
     // draw grid cells
     //
@@ -205,14 +199,8 @@ render_level :: () {
             // out of vision
             color := Color.{10, 10, 10, 255};
             
-            if i >= map_left && i < map_left + current_level_width
-            && j >= map_top && j < map_top + current_level_height
-                // on map
-                then color = GRAY;
-            else if i >= vision_left && i < vision_left + vision_width 
-            && j >= vision_top && j < vision_top + vision_height
-                // in vision, but off map
-                then color = DARKGRAY;
+            if is_on_map() then color = GRAY;
+            else if is_in_vision() then color = DARKGRAY;
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
@@ -221,16 +209,8 @@ render_level :: () {
 
     if state == .LEVEL then draw_level_sidebar();
 
-    for _Room {
-        if it.x >= vision_left && it.x < vision_left + vision_width 
-        && it.y >= vision_top && it.y < vision_top + vision_height
-            then render(it);
-    }
-    for _Door {
-        if it.x >= vision_left && it.x < vision_left + vision_width 
-        && it.y >= vision_top && it.y < vision_top + vision_height
-            then render(it);
-    }
+    for _Room { if is_in_vision() then render(it); }
+    for _Door { if is_in_vision() then render(it); }
 
     // draw ghosts
     if highlighted_card > -1 {
