@@ -116,6 +116,11 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     y := game.map_top_left.y + y_index * (CELL_WIDTH + 1);
     return xy(x, y);
 }
+get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
+    x := 1 + x_index * (CELL_WIDTH + 1);
+    y := 1 + y_index * (CELL_WIDTH + 1);
+    return xy(x, y);
+}
 
 is_valid_placement :: (using room: Room) -> bool {
     fits_horizontally := x + room.width <= game.current_level_width;
