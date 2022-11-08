@@ -184,6 +184,8 @@ simulate_level :: () {
         SetMouseCursor(xx game.intended_cursor);
         game.mouse_cursor = game.intended_cursor;
     }
+
+    check_level_success();
 }
 
 render_level :: () {

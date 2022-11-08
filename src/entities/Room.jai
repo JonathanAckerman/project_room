@@ -37,7 +37,7 @@ draw_room_ghost :: (room: *Room) {
         DrawRectangleV(get_cell_position(x, y), size, color);
         game.intended_cursor = .POINTING_HAND;
     } else {
-        DrawRectangleV(input.mouse_position - size/2, size, color);
+        DrawRectangleV(input.mouse_position - CELL_SIZE/2, size, color);
         game.intended_cursor = .NOT_ALLOWED;
     }
 }
