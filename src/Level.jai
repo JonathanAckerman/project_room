@@ -224,86 +224,24 @@ render_level :: () {
     if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 }
 
-check_level_success :: (force_success: bool = false) {
-    beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
-    if force_success || beat_level {
-        game.state = .LEVEL_COMPLETION;
-        game.level_has_focus = false;
-        game.highlighted_card = -1;
-    }
-}
-
-// @@@: rework this, eg: hand should maybe be separate struct from game
-load_level :: (index: int) {
-    using game;
-    state = .LEVEL;
-    level_index = index;
-
-    if index == Level_Sequence.count {
-        print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
-        game.state = .LEVEL_SELECT;
-        return;
-    }
-
-    level_has_focus = true;
-    level = Level_Sequence[index];
-
-    print("LOADING LEVEL %\n", index+1);
-    assert(level.width <= GRID_WIDTH && level.height <= GRID_HEIGHT, "\nGrid dimensions: %,%\nMax dimensions:  %,%", GRID_WIDTH, GRID_HEIGHT, level.width, level.height);
-    assert(level.width % 2 == 1 && level.height % 2 == 1, "\nSince we want to center the map on an odd size grid, the dimensions of the map should also be odd");
-
-    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
-    map_size.y = 1 + level.height * CELL_WIDTH + level.height;
-    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
-    for context.entity_storage._Room {
-        despawn(it);
-    }
-    for context.entity_storage._Door {
-        despawn(it);
-    }
-    for context.entity_storage._Card {
-        despawn(it);
-    }
-    phase = .ROOM_PLACEMENT;
-    intended_cursor = .CROSSHAIR;
-    highlighted_card = -1;
-    is_first_placement = true;
-
-    deck: [..] Card;
-    assert(level.room_cards.count % 3 == 0, "Level % has the wrong # of room cards\n", index+1);
-    assert(player_room_deck.count % 3 == 0, "Player has the wrong # of room cards\n");
-    for level.room_cards array_add(*deck, it);
-    for player_room_deck array_add(*deck, it);
-    fisher_yates_shuffle(*deck);
-    for deck array_add(*room_deck, spawn(it));
-    array_reset(*deck);
-    assert(level.door_cards.count % 3 == 0, "Level % has the wrong # of door cards\n", index+1);
-    assert(player_door_deck.count % 3 == 0, "Player has the wrong # of door cards\n");
-    for level.door_cards array_add(*deck, it);
-    for player_door_deck array_add(*deck, it);
-    fisher_yates_shuffle(*deck);
-    for deck array_add(*door_deck, spawn(it));
-
-    for level.starting_rooms {
-        room := it;
-        room.position = get_cell_position(it.x, it.y);
-        spawn(room);
-    }
-}
-
 draw_level_sidebar :: () {
     using game;
 
     //
-    // draw deck
+    // draw decks
     //
     {
         using game.level;
 
         color := ifx room_deck.count == 0 then DARKGRAY else LIGHTGRAY;
-        DrawRectangleV(DECK_POS - xy(50, 0), xy(185, 250), color);
+        pos := xy(SIDEBAR_LEFT + 50, 100);
+        DrawTextEx(Fonts.bahnschrift, "Room Deck", pos - xy(0, 50), 32, 1, WHITE);
+        DrawRectangleV(pos, CARD_SIZE, color);
+
+        pos.x += CARD_WIDTH + 50;
+        DrawTextEx(Fonts.bahnschrift, "Door Deck", pos - xy(0, 50), 32, 1, WHITE);
         color = ifx door_deck.count == 0 then DARKGRAY else LIGHTGRAY;
-        DrawRectangleV(DECK_POS + xy(50, 0), xy(185, 250), color);
+        DrawRectangleV(pos, CARD_SIZE, color);
     }
 
     //
@@ -379,5 +317,72 @@ draw_level_sidebar :: () {
                 case .DOOR;
             }
         }
+    }
+}
+
+check_level_success :: (force_success: bool = false) {
+    beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
+    if force_success || beat_level {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+    }
+}
+
+// @@@: rework this, eg: hand should maybe be separate struct from game
+load_level :: (index: int) {
+    using game;
+    state = .LEVEL;
+    level_index = index;
+
+    if index == Level_Sequence.count {
+        print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
+        game.state = .LEVEL_SELECT;
+        return;
+    }
+
+    level_has_focus = true;
+    level = Level_Sequence[index];
+
+    print("LOADING LEVEL %\n", index+1);
+    assert(level.width <= GRID_WIDTH && level.height <= GRID_HEIGHT, "\nGrid dimensions: %,%\nMax dimensions:  %,%", GRID_WIDTH, GRID_HEIGHT, level.width, level.height);
+    assert(level.width % 2 == 1 && level.height % 2 == 1, "\nSince we want to center the map on an odd size grid, the dimensions of the map should also be odd");
+
+    map_size.x = 1 + level.width * CELL_WIDTH + level.width;
+    map_size.y = 1 + level.height * CELL_WIDTH + level.height;
+    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
+    for context.entity_storage._Room {
+        despawn(it);
+    }
+    for context.entity_storage._Door {
+        despawn(it);
+    }
+    for context.entity_storage._Card {
+        despawn(it);
+    }
+    phase = .ROOM_PLACEMENT;
+    intended_cursor = .CROSSHAIR;
+    highlighted_card = -1;
+    is_first_placement = true;
+
+    deck: [..] Card;
+    assert(level.room_cards.count % 3 == 0, "Level % has the wrong # of room cards\n", index+1);
+    assert(player_room_deck.count % 3 == 0, "Player has the wrong # of room cards\n");
+    for level.room_cards array_add(*deck, it);
+    for player_room_deck array_add(*deck, it);
+    fisher_yates_shuffle(*deck);
+    for deck array_add(*room_deck, spawn(it));
+    array_reset(*deck);
+    assert(level.door_cards.count % 3 == 0, "Level % has the wrong # of door cards\n", index+1);
+    assert(player_door_deck.count % 3 == 0, "Player has the wrong # of door cards\n");
+    for level.door_cards array_add(*deck, it);
+    for player_door_deck array_add(*deck, it);
+    fisher_yates_shuffle(*deck);
+    for deck array_add(*door_deck, spawn(it));
+
+    for level.starting_rooms {
+        room := it;
+        room.position = get_cell_position(it.x, it.y);
+        spawn(room);
     }
 }
