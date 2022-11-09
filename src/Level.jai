@@ -345,7 +345,7 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     offset := direction_to_offset(direction);
     edge := cell_center + offset * CELL_WIDTH/2;
     size          := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
-    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(2,0) else xy(0,2);
+    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(VERT_DOOR_SIZE.x/2,0) else xy(0,HORIZ_DOOR_SIZE.y/2);
     pos := edge - size/2;
     if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
     DrawRectangleV(pos, size + gutter_offset, color);
