@@ -116,6 +116,7 @@ simulate_level :: () {
                             if in_bounds && neighbor.room != .EMPTY then neighbor.edges[opposite_direction] = .DOOR;
                             despawn(card);
                         }
+                        else reset_highlight = false;
                 }
             }
         }
