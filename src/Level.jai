@@ -62,6 +62,34 @@ simulate_level :: () {
             if !gone {
                 if card.type == {
                     case .MIXED;
+                        if is_valid_placement(card.cells) {
+                            mouse_x, mouse_y := get_cell_index(input.mouse_position);
+                            for card.cells {
+                                cell_x := mouse_x + it.cell.x;
+                                cell_y := mouse_y + it.cell.y;
+                                
+                                if it.can_merge {
+                                    if grid[cell_y][cell_x].room == .EMPTY {
+                                        // overwrite
+                                        grid[cell_y][cell_x].edges = it.cell.edges;    
+                                    } else {
+                                        for * edge, edge_index: grid[cell_y][cell_x].edges {
+                                            if <<edge != .EMPTY {
+                                                <<edge = it.cell.edges[edge_index];
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    // overwrite
+                                    grid[cell_y][cell_x].edges = it.cell.edges;
+                                }
+
+                                grid[cell_y][cell_x].room = it.cell.room;
+                            }
+                            despawn(card);
+                        }
+                        else reset_highlight = false;
                     case .DOOR;
                         x, y := get_cell_index(input.mouse_position);
                         direction := get_nearest_edge(x, y);
@@ -69,13 +97,6 @@ simulate_level :: () {
                             grid[y][x].edges[cast(int) direction] = .DOOR;
                         }
                 }
-                // if is_valid_placement(card.room) {
-                //     card.room.position = get_cell_position(card.room.x, card.room.y);
-                //     spawn(card.room);
-                //     despawn(card);
-                //     if count_hand() == 0 then phase = .DOOR_PLACEMENT;
-                // }
-                // else reset_highlight = false;
             }
         }
         
@@ -144,8 +165,11 @@ render_level :: () {
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
 
-            for cell.edges if it == .DOOR {
-                draw_door(i, j, cast(Direction) it_index);
+            for cell.edges if it == {
+                case .WALL;
+                    draw_wall(i, j, cast(Direction) it_index);
+                case .DOOR;
+                    draw_door(i, j, cast(Direction) it_index);
             }
         }
     }
@@ -162,13 +186,12 @@ render_level :: () {
                 case .MIXED;
                     if is_valid_placement(card.cells) {
                         x, y := get_cell_index(input.mouse_position);
-                        pos := get_cell_position(x, y);
-                        if card.cells.count % 2 == 1 then pos += CELL_SIZE/2 + xy(1,1);
+                        pos := get_cell_position(x, y) + xy(1,1);
                         draw_card_cells(card.cells, pos, 100);
                         intended_cursor = .POINTING_HAND;
                     }
                     else {
-                        draw_card_cells(card.cells, input.mouse_position, 100);
+                        draw_card_cells(card.cells, input.mouse_position - CELL_SIZE/2, 100);
                         intended_cursor = .NOT_ALLOWED;
                     }
                 case .DOOR;
@@ -251,7 +274,7 @@ draw_level_sidebar :: () {
             card_center := HAND_POS[0] + CARD_SIZE/2.0;
             if card.type == {
                 case .MIXED;
-                    draw_card_cells(card.cells, card_center);
+                    draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
@@ -261,7 +284,7 @@ draw_level_sidebar :: () {
             card_center := HAND_POS[1] + CARD_SIZE/2.0;
             if card.type == {
                 case .MIXED;
-                    draw_card_cells(card.cells, card_center);
+                    draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
@@ -271,7 +294,7 @@ draw_level_sidebar :: () {
             card_center := HAND_POS[2] + CARD_SIZE/2.0;
             if card.type == {
                 case .MIXED;
-                    draw_card_cells(card.cells, card_center);
+                    draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
             }
@@ -279,7 +302,19 @@ draw_level_sidebar :: () {
     }
 }
 
-draw_card_cells :: (cells: [] Card_Cell, center: Vector2, opacity: u8 = 255) {
+draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
+    color := YELLOW;
+    for cells {
+        if it.can_merge then color = WHITE;
+        color.a = opacity;
+
+        pos := position + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
+        DrawRectangleV(pos, CELL_SIZE, color);
+        DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
+        // the overlapping gutters will be darker than the borders but dgaf
+    }
+}
+draw_card_cells_with_center :: (cells: [] Card_Cell, center: Vector2, opacity: u8 = 255) {
     stamp_width := cast(int) sqrt(cast(float) cells.count);
     pixel_width := CELL_WIDTH * stamp_width;
     stamp_base_pos := center - xy(pixel_width/2, pixel_width/2);
@@ -303,6 +338,18 @@ draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2
     DrawRectangleV(position, size, color);
 }
 
+draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
+    color := BLACK;
+    color.a = opacity;
+    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
+    offset := direction_to_offset(direction);
+    edge := cell_center + offset * CELL_WIDTH/2;
+    size          := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
+    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(2,0) else xy(0,2);
+    pos := edge - size/2;
+    if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
+    DrawRectangleV(pos, size + gutter_offset, color);
+}
 draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     color := BLUE;
     color.a = opacity;
@@ -386,6 +433,14 @@ load_level :: (index: int) {
     for player_deck array_add(*shuffle, it);
     fisher_yates_shuffle(*shuffle);
     for shuffle array_add(*deck, spawn(it));
+
+    // init grid
+    for * row, y: grid {
+        for * cell, x: <<row {
+            cell.x = x;
+            cell.y = y;
+        }
+    }
 
     for level.starting_cells {
         grid[it.y][it.x] = it;

@@ -130,22 +130,19 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     y := y_index * (CELL_WIDTH + 1);
     return xy(x, y);
 }
-get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
-    x := 1 + x_index * (CELL_WIDTH + 1);
-    y := 1 + y_index * (CELL_WIDTH + 1);
-    return xy(x, y);
-}
+// get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
+//     x := 1 + x_index * (CELL_WIDTH + 1);
+//     y := 1 + y_index * (CELL_WIDTH + 1);
+//     return xy(x, y);
+// }
 
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
     mouse_x, mouse_y := get_cell_index(input.mouse_position);
-    stamp_width := cast(int) sqrt(cast(float) cells.count);
-    stamp_x := mouse_x - stamp_width/2;
-    stamp_y := mouse_y - stamp_width/2;
 
     has_adjacency := false;
     for cells {
-        cell_x := stamp_x + it.cell.x;
-        cell_y := stamp_y + it.cell.y;
+        cell_x := mouse_x + it.cell.x;
+        cell_y := mouse_y + it.cell.y;
         // cell is off map
         if !is_on_map(cell_x, cell_y) return false;
         
@@ -155,16 +152,23 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
             else return false;
         }
 
-        for enum_values_as_s64(Direction) {
-            offset := direction_to_offset(cast(Direction) it);
-            neighbor := game.grid[cell_y + cast(int) offset.y][cell_x + cast(int) offset.x];
-            if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY {
-                has_adjacency = true;
-            }
+        // check cell neighbors for adjacency
+        for dir: enum_values_as_s64(Direction) {
+            offset := direction_to_offset(cast(Direction) dir);
+            neighbor_x := cell_x + cast(int) offset.x;
+            neighbor_y := cell_y + cast(int) offset.y;
+
+            // skip neighbors that are off map to prevent OOB
+            if neighbor_x < 0 || neighbor_x > GRID_WIDTH-1 
+            || neighbor_y < 0 || neighbor_y > GRID_HEIGHT-1 then continue;
+
+            neighbor := game.grid[neighbor_y][neighbor_x];
+
+            if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY 
+                then has_adjacency = true;
         }
     }
 
-    // no cell is adjacent to an existing room
     if !has_adjacency return false;
 
     return true;
