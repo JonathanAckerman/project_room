@@ -43,6 +43,14 @@ Levels: struct {
             Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
             Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
 
+            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
             Cell.{.{0, 0}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
         ],
@@ -360,10 +368,10 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     size: Vector2;
     pos:  Vector2;
 
-    if direction == {
-        case .NORTH;
+    if direction == .NORTH || direction == .SOUTH {
             size = HORIZ_DOOR_SIZE + xy(2, 0);
             pos = edge - xy(size.x/2 - 1, 0);
+            if direction == .SOUTH then pos -= xy(0, size.y - 2);
 
             left_valid, left_neighbor  := get_cell(x-1, y);
             round_corner_left := left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY;
@@ -377,28 +385,24 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
             if right_valid && round_corner_right {
                 size += xy(VERT_DOOR_SIZE.x - 1, 0);
             }
-        case .EAST;
-            size = VERT_DOOR_SIZE + xy(0, 2);
-            pos = edge - xy(size.x - 2, size.y/2 - 1);
-        case .SOUTH;
-            size = HORIZ_DOOR_SIZE + xy(2, 0);
-            pos = edge - xy(size.x/2 - 1, size.y - 2); // only diff with NORTH is "size.y - 2"
+    }
+    else {
+        size = VERT_DOOR_SIZE + xy(0, 2);
+        pos = edge - xy(0, size.y/2 - 1);
+        if direction == .EAST then pos -= xy(size.x - 2, 0);
+        
+        up_valid, up_neighbor  := get_cell(x, y-1);
+        round_corner_up := up_neighbor.room != .EMPTY && up_neighbor.edges[cast(int) direction] == .EMPTY;
+        if up_valid && round_corner_up {
+            size += xy(0, HORIZ_DOOR_SIZE.y - 1);
+            pos -= xy(0, HORIZ_DOOR_SIZE.y - 1);
+        }
 
-            left_valid, left_neighbor  := get_cell(x-1, y);
-            round_corner_left := left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY;
-            if left_valid && round_corner_left {
-                size += xy(VERT_DOOR_SIZE.x - 1, 0);
-                pos -= xy(VERT_DOOR_SIZE.x - 1, 0);
-            }
-
-            right_valid, right_neighbor := get_cell(x+1, y);
-            round_corner_right := right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY;
-            if right_valid && round_corner_right {
-                size += xy(VERT_DOOR_SIZE.x - 1, 0);
-            }
-        case .WEST;
-            size = VERT_DOOR_SIZE + xy(0, 2);
-            pos = edge - xy(0, size.y/2 - 1);
+        down_valid, down_neighbor := get_cell(x, y+1);
+        round_corner_down := down_neighbor.room != .EMPTY && down_neighbor.edges[cast(int) direction] == .EMPTY;
+        if down_valid && round_corner_down {
+            size += xy(0, HORIZ_DOOR_SIZE.y - 1);
+        }
     }
     DrawRectangleV(pos, size, color);
 }
