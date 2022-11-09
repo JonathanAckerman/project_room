@@ -137,55 +137,37 @@ get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
 }
 
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
+    mouse_x, mouse_y := get_cell_index(input.mouse_position);
     stamp_width := cast(int) sqrt(cast(float) cells.count);
-    pixel_width := CELL_WIDTH * stamp_width;
-    stamp_base_pos := input.mouse_position - xy(pixel_width/2, pixel_width/2);
-    x, y := get_cell_index(stamp_base_pos);
+    stamp_x := mouse_x - stamp_width/2;
+    stamp_y := mouse_y - stamp_width/2;
 
-    // base is off map
-    if x == -1 && y == -1 return false;
-
+    has_adjacency := false;
     for cells {
+        cell_x := stamp_x + it.cell.x;
+        cell_y := stamp_y + it.cell.y;
         // cell is off map
-        if !is_on_map(x + it.cell.x, y + it.cell.y) return false;
+        if !is_on_map(cell_x, cell_y) return false;
         
+        // cell overlaps
+        if game.grid[cell_y][cell_x].room != .EMPTY {
+            if it.can_merge then has_adjacency = true;
+            else return false;
+        }
 
+        for enum_values_as_s64(Direction) {
+            offset := direction_to_offset(cast(Direction) it);
+            neighbor := game.grid[cell_y + cast(int) offset.y][cell_x + cast(int) offset.x];
+            if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY {
+                has_adjacency = true;
+            }
+        }
     }
 
-    return true;
+    // no cell is adjacent to an existing room
+    if !has_adjacency return false;
 
-    // fits_horizontally := x + room.width <= game.current_level_width;
-    // fits_vertically   := y + room.height <= game.current_level_height;
-    // if x >= 0 && fits_horizontally && y >= 0 && fits_vertically {
-    //     overlaps_existing_room := false;
-    //     for context.entity_storage._Room {
-    //         if x + room.width - 1 >= it.x 
-    //         && x < it.x + it.width
-    //         && y + room.height - 1 >= it.y 
-    //         && y < it.y + it.height {
-    //             overlaps_existing_room = true;
-    //             break;
-    //         }
-    //     }
-    //     if !overlaps_existing_room {
-    //         // test adjacency to other rooms
-    //         if game.is_first_placement return true;
-    //         for context.entity_storage._Room {
-    //             on_right := left(room) == right(it) + 1;
-    //             on_left := right(room) == left(it) - 1;
-    //             on_bottom := top(room) == bottom(it) + 1;
-    //             on_top := bottom(room) == top(it) - 1;
-                
-    //             if (on_left   && top(room) <= bottom(it) && bottom(room) >= top(it))
-    //             || (on_right  && top(room) <= bottom(it) && bottom(room) >= top(it))
-    //             || (on_top    && right(room) >= left(it) && left(room) <= right(it))
-    //             || (on_bottom && right(room) >= left(it) && left(room) <= right(it)) {
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    // }
-    // return false;
+    return true;
 }
 
 is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, type: Card_Door_Type) -> bool {
@@ -268,6 +250,12 @@ is_in_vision :: (x: int, y: int, exclude_map: bool = false) -> bool {
     else return false; // out of vision
 }
 
-// get_nearest_cell :: (position: Vector2) -> int, int {
-//     return x, y;
-// }
+get_nearest_cell :: (position: Vector2) -> int, int {
+    point := position + CELL_SIZE/2;
+    x := cast(int) (point.x / (CELL_WIDTH + 1));
+    y := cast(int) (point.y / (CELL_WIDTH + 1));
+
+    if x < 0 || y < 0 return -1, -1;
+    if x > GRID_WIDTH || y > GRID_HEIGHT return -1, -1;
+    return x, y;
+}

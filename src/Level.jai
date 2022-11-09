@@ -6,7 +6,7 @@ Level :: struct {
 }
 
 #run {
-    for Level_Sequence assert(it.cards.count % 3 == 0);
+    for Level_Sequence assert(it.cards.count % 3 == 0, "Level %: # of cards % 3 must == 0", it_index+1);
 }
 
 Level_Sequence: [1] Level = .[
@@ -23,11 +23,10 @@ Levels: struct {
         height=.[5, 9, 15, GRID_HEIGHT],
         cards=.[
             Cards.R11,
-            Cards.R11,
             Cards.R22,
-            Cards.R22,
-            Cards.D1,
-            Cards.D1,
+            Cards.M22,
+            // Cards.D1,
+            // Cards.D1,
         ],
         starting_cells=.[
             Cell.{.{1, 1}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .WALL]},
@@ -286,14 +285,13 @@ draw_card_cells :: (cells: [] Card_Cell, center: Vector2, opacity: u8 = 255) {
     stamp_base_pos := center - xy(pixel_width/2, pixel_width/2);
 
     color := YELLOW;
-    color.a = opacity;
-    for i: 0..stamp_width - 1 {
-        for j: 0..stamp_width - 1 {
-            pos := stamp_base_pos + xy(xx i, xx j) * (CELL_WIDTH + 1);
-            DrawRectangleV(pos, CELL_SIZE, color);
-            DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
-            // the overlapping gutters will be darker than the borders but dgaf
-        }
+    for cells {
+        if it.can_merge then color = WHITE;
+        color.a = opacity;
+        pos := stamp_base_pos + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
+        DrawRectangleV(pos, CELL_SIZE, color);
+        DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
+        // the overlapping gutters will be darker than the borders but dgaf
     }
 }
 

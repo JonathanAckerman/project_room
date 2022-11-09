@@ -44,6 +44,15 @@ Cards: struct {
             Card_Cell.{cell=.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}},
         ],
     };
+    M22 :: Card.{
+        type=.MIXED,
+        cells=.[
+            Card_Cell.{.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, true},
+            Card_Cell.{.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}, true},
+            Card_Cell.{.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}, true},
+            Card_Cell.{.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}, true},
+        ],
+    };
 
     // Doors ----------------------------------------------------------------------
     D1 :: Card.{
