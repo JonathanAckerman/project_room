@@ -25,8 +25,9 @@ Levels: struct {
             Cards.R11,
             Cards.R22,
             Cards.M22,
-            // Cards.D1,
-            // Cards.D1,
+            Cards.D1,
+            Cards.D1,
+            Cards.D1,
         ],
         starting_cells=.[
             Cell.{.{1, 1}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .WALL]},
@@ -34,7 +35,14 @@ Levels: struct {
             Cell.{.{1, 2}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .WALL]},
             Cell.{.{2, 2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .EMPTY]},
 
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
             Cell.{.{0, 0}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
         ],
@@ -164,8 +172,13 @@ render_level :: () {
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
+        }
+    }
 
-            for cell.edges if it == {
+    // rather than a draw buffer lets just loop again for walls
+    for j: 0..GRID_HEIGHT-1 {
+        for i: 0..GRID_WIDTH-1 {
+            for grid[j][i].edges if it == {
                 case .WALL;
                     draw_wall(i, j, cast(Direction) it_index);
                 case .DOOR;
@@ -344,11 +357,50 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
     offset := direction_to_offset(direction);
     edge := cell_center + offset * CELL_WIDTH/2;
-    size          := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
-    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(VERT_DOOR_SIZE.x/2,0) else xy(0,HORIZ_DOOR_SIZE.y/2);
-    pos := edge - size/2;
-    if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
-    DrawRectangleV(pos, size + gutter_offset, color);
+    size: Vector2;
+    pos:  Vector2;
+
+    if direction == {
+        case .NORTH;
+            size = HORIZ_DOOR_SIZE + xy(2, 0);
+            pos = edge - xy(size.x/2 - 1, 0);
+
+            left_valid, left_neighbor  := get_cell(x-1, y);
+            round_corner_left := left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY;
+            if left_valid && round_corner_left {
+                size += xy(VERT_DOOR_SIZE.x - 1, 0);
+                pos -= xy(VERT_DOOR_SIZE.x - 1, 0);
+            }
+
+            right_valid, right_neighbor := get_cell(x+1, y);
+            round_corner_right := right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY;
+            if right_valid && round_corner_right {
+                size += xy(VERT_DOOR_SIZE.x - 1, 0);
+            }
+        case .EAST;
+            size = VERT_DOOR_SIZE + xy(0, 2);
+            pos = edge - xy(size.x - 2, size.y/2 - 1);
+        case .SOUTH;
+            size = HORIZ_DOOR_SIZE + xy(2, 0);
+            pos = edge - xy(size.x/2 - 1, size.y - 2); // only diff with NORTH is "size.y - 2"
+
+            left_valid, left_neighbor  := get_cell(x-1, y);
+            round_corner_left := left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY;
+            if left_valid && round_corner_left {
+                size += xy(VERT_DOOR_SIZE.x - 1, 0);
+                pos -= xy(VERT_DOOR_SIZE.x - 1, 0);
+            }
+
+            right_valid, right_neighbor := get_cell(x+1, y);
+            round_corner_right := right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY;
+            if right_valid && round_corner_right {
+                size += xy(VERT_DOOR_SIZE.x - 1, 0);
+            }
+        case .WEST;
+            size = VERT_DOOR_SIZE + xy(0, 2);
+            pos = edge - xy(0, size.y/2 - 1);
+    }
+    DrawRectangleV(pos, size, color);
 }
 draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     color := BLUE;

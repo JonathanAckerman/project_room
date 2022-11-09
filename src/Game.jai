@@ -136,6 +136,12 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
 //     return xy(x, y);
 // }
 
+get_cell :: (x: int, y: int) -> bool, Cell {
+    result: Cell;
+    if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, result;
+    return true, game.grid[y][x];
+}
+
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
     mouse_x, mouse_y := get_cell_index(input.mouse_position);
 
