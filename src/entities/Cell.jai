@@ -17,3 +17,24 @@ Border_Type :: enum {
     WALL;
     DOOR;
 }
+
+Direction :: enum {
+    NORTH;
+    EAST;
+    SOUTH;
+    WEST;
+}
+
+direction_to_offset :: (dir: Direction) -> Vector2 {
+    if #complete dir == {
+        case .NORTH; return .{0, -1};
+        case .EAST;  return .{1, 0};
+        case .SOUTH; return .{0, 1};
+        case .WEST;  return .{-1, 0};
+    }
+}
+
+opposite :: (dir: Direction) -> Direction {
+    i := (cast(int) dir) + 2;
+    return cast(Direction)(i % 4);
+}

@@ -56,22 +56,6 @@ Game_Phase :: enum {
     DOOR_PLACEMENT;
 }
 
-Direction :: enum {
-    NORTH;
-    EAST;
-    SOUTH;
-    WEST;
-}
-
-direction_to_offset :: (dir: Direction) -> Vector2 {
-    if #complete dir == {
-        case .NORTH; return .{0, -1};
-        case .EAST;  return .{1, 0};
-        case .SOUTH; return .{0, 1};
-        case .WEST;  return .{-1, 0};
-    }
-}
-
 frame: struct {
     dt: float64;
 }
@@ -136,10 +120,26 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
 //     return xy(x, y);
 // }
 
-get_cell :: (x: int, y: int) -> bool, Cell {
-    result: Cell;
-    if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, result;
-    return true, game.grid[y][x];
+get_cell :: (x: int, y: int) -> bool, *Cell {
+    if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, null;
+    return true, *game.grid[y][x];
+}
+
+get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
+    n_x := x;
+    n_y := y;
+    if #complete direction == {
+        case .NORTH;
+            n_y -= 1;
+        case .EAST;
+            n_x += 1;
+        case .SOUTH;
+            n_y += 1;
+        case .WEST;
+            n_x -= 1;
+    }
+    in_bounds, result := get_cell(n_x, n_y);
+    return in_bounds, result;
 }
 
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
@@ -202,11 +202,18 @@ is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, ty
 
     // door already exists there
     if cell.edges[cast(int) direction] == .DOOR return false;
-    if neighbor.edges[cast(int) direction] == .DOOR return false;
+    if neighbor.edges[cast(int) opposite(direction)] == .DOOR return false;
 
     // there is no wall to replace
-    if neighbor.edges[cast(int) direction] != .WALL 
-    && cell.edges[cast(int) direction] != .WALL return false;
+    if neighbor.edges[cast(int) opposite(direction)] != .WALL 
+    && cell.edges[cast(int) direction] != .WALL {
+        // and we are not closing off a hallway
+        left := (cast(int) direction + 3) % 4;
+        right := (cast(int) direction + 1) % 4;
+        if (cell.edges[left] != .WALL || cell.edges[right] != .WALL)
+        && (neighbor.edges[left] != .WALL || neighbor.edges[right] != .WALL)
+            return false;
+    }
 
     return true;    
 }
@@ -258,14 +265,4 @@ is_in_vision :: (x: int, y: int, exclude_map: bool = false) -> bool {
         }
         else return true; // in vision
     else return false; // out of vision
-}
-
-get_nearest_cell :: (position: Vector2) -> int, int {
-    point := position + CELL_SIZE/2;
-    x := cast(int) (point.x / (CELL_WIDTH + 1));
-    y := cast(int) (point.y / (CELL_WIDTH + 1));
-
-    if x < 0 || y < 0 return -1, -1;
-    if x > GRID_WIDTH || y > GRID_HEIGHT return -1, -1;
-    return x, y;
 }

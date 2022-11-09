@@ -111,6 +111,10 @@ simulate_level :: () {
                         direction := get_nearest_edge(x, y);
                         if is_valid_door_placement(x, y, direction, card.door.width, card.door.type) {
                             grid[y][x].edges[cast(int) direction] = .DOOR;
+                            in_bounds, neighbor := get_neighbor(x, y, direction);
+                            opposite_direction := cast(int) opposite(direction);
+                            if in_bounds && neighbor.room != .EMPTY then neighbor.edges[opposite_direction] = .DOOR;
+                            despawn(card);
                         }
                 }
             }
@@ -373,16 +377,16 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
             pos = edge - xy(size.x/2 - 1, 0);
             if direction == .SOUTH then pos -= xy(0, size.y - 2);
 
-            left_valid, left_neighbor  := get_cell(x-1, y);
-            round_corner_left := left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY;
-            if left_valid && round_corner_left {
+            left_valid, left_neighbor := get_cell(x-1, y);
+            // check if we need to round a left corner
+            if left_valid && left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY {
                 size += xy(VERT_DOOR_SIZE.x - 1, 0);
                 pos -= xy(VERT_DOOR_SIZE.x - 1, 0);
             }
 
+            // check if we need to round a right corner
             right_valid, right_neighbor := get_cell(x+1, y);
-            round_corner_right := right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY;
-            if right_valid && round_corner_right {
+            if right_valid && right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY {
                 size += xy(VERT_DOOR_SIZE.x - 1, 0);
             }
     }
@@ -391,16 +395,16 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
         pos = edge - xy(0, size.y/2 - 1);
         if direction == .EAST then pos -= xy(size.x - 2, 0);
         
-        up_valid, up_neighbor  := get_cell(x, y-1);
-        round_corner_up := up_neighbor.room != .EMPTY && up_neighbor.edges[cast(int) direction] == .EMPTY;
-        if up_valid && round_corner_up {
+        // check if we need to round an up corner
+        up_valid, up_neighbor := get_cell(x, y-1);
+        if up_valid && up_neighbor.room != .EMPTY && up_neighbor.edges[cast(int) direction] == .EMPTY {
             size += xy(0, HORIZ_DOOR_SIZE.y - 1);
             pos -= xy(0, HORIZ_DOOR_SIZE.y - 1);
         }
 
+        // check if we need to round a down corner
         down_valid, down_neighbor := get_cell(x, y+1);
-        round_corner_down := down_neighbor.room != .EMPTY && down_neighbor.edges[cast(int) direction] == .EMPTY;
-        if down_valid && round_corner_down {
+        if down_valid && down_neighbor.room != .EMPTY && down_neighbor.edges[cast(int) direction] == .EMPTY {
             size += xy(0, HORIZ_DOOR_SIZE.y - 1);
         }
     }
