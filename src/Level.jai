@@ -25,6 +25,15 @@ Levels: struct {
             Cards.R11,
             Cards.R22,
             Cards.M22,
+
+            Cards.D1,
+            Cards.D1,
+            Cards.D1,
+
+            Cards.R11,
+            Cards.R22,
+            Cards.M22,
+
             Cards.D1,
             Cards.D1,
             Cards.D1,
@@ -450,12 +459,17 @@ get_nearest_edge :: (x: int, y: int) -> Direction {
 }
 
 check_level_success :: (force_success: bool = false) {
-    // beat_level := game.room_deck.count == 0 && game.door_deck.count == 0 && game.count_hand() == 0;
-    // if force_success || beat_level {
-    //     game.state = .LEVEL_COMPLETION;
-    //     game.level_has_focus = false;
-    //     game.highlighted_card = -1;
-    // }
+    beat_level := game.deck.count == 0 && game.count_hand() == 0;
+    if force_success || beat_level {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+    }
+
+    if game.count_hand() == 0 {
+        phase := game.level.width.count - (game.deck.count / (game.level.width.count - 1));
+        if game.map_phase != phase then grow_map();
+    }
 }
 
 load_level :: (index: int) {
