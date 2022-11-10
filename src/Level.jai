@@ -89,25 +89,34 @@ simulate_level :: () {
                     case .MIXED;
                         if is_valid_placement(card.cells) {
                             mouse_x, mouse_y := get_cell_index(input.mouse_position);
-                            for card.cells {
+                            for * card.cells {
                                 cell_x := mouse_x + it.cell.x;
                                 cell_y := mouse_y + it.cell.y;
-                                
+
                                 if it.can_merge {
-                                    if grid[cell_y][cell_x].room == .EMPTY {
-                                        // overwrite
-                                        grid[cell_y][cell_x].edges = it.cell.edges;    
-                                    } else {
-                                        for * edge, edge_index: grid[cell_y][cell_x].edges {
-                                            if <<edge != .EMPTY {
-                                                <<edge = it.cell.edges[edge_index];
-                                            }
+                                    for * g, g_index: grid[cell_y][cell_x].edges {
+                                        if it.cell.edges[g_index] == .EMPTY {
+                                            <<g = .EMPTY;
+                                        }
+                                        else if <<g != .EMPTY && <<g < it.cell.edges[g_index] {
+                                            <<g = it.cell.edges[g_index];
                                         }
                                     }
+
+                                    if grid[cell_y][cell_x].room == .EMPTY {
+                                        for * g, g_index: grid[cell_y][cell_x].edges {
+                                            if <<g < it.cell.edges[g_index] {
+                                                <<g = it.cell.edges[g_index];
+                                            }
+                                        }
+                                    } 
                                 }
                                 else {
-                                    // overwrite
-                                    grid[cell_y][cell_x].edges = it.cell.edges;
+                                    for * g, g_index: grid[cell_y][cell_x].edges {
+                                        if <<g < it.cell.edges[g_index] {
+                                            <<g = it.cell.edges[g_index];
+                                        }
+                                    }
                                 }
 
                                 grid[cell_y][cell_x].room = it.cell.room;
@@ -122,7 +131,7 @@ simulate_level :: () {
                             grid[y][x].edges[cast(int) direction] = .DOOR;
                             in_bounds, neighbor := get_neighbor(x, y, direction);
                             opposite_direction := cast(int) opposite(direction);
-                            if in_bounds && neighbor.room != .EMPTY then neighbor.edges[opposite_direction] = .DOOR;
+                            if in_bounds then neighbor.edges[opposite_direction] = .DOOR;
                             despawn(card);
                         }
                         else reset_highlight = false;

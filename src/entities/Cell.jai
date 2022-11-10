@@ -38,3 +38,7 @@ opposite :: (dir: Direction) -> Direction {
     i := (cast(int) dir) + 2;
     return cast(Direction)(i % 4);
 }
+opposite :: (dir_index: int) -> int {
+    i := dir_index + 2;
+    return i % 4;
+}
