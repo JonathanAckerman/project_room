@@ -495,7 +495,8 @@ load_level :: (index: int) {
 
     if index == Level_Sequence.count {
         print("YOU BEAT ALL % LEVELS!\n", Level_Sequence.count);
-        game.state = .LEVEL_SELECT;
+        // game.state = .LEVEL_SELECT;
+        game_reset();
         return;
     }
 
@@ -535,8 +536,5 @@ load_level :: (index: int) {
 
     for level.starting_cells {
         grid[it.y][it.x] = it;
-        // room := it;
-        // room.position = get_absolute_cell_position(it.x, it.y);
-        // spawn(room);
     }
 }
