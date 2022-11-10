@@ -39,11 +39,6 @@ Levels: struct {
             Cards.D1,
         ],
         starting_cells=.[
-            Cell.{.{1, 1}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .WALL]},
-            Cell.{.{2, 1}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .EMPTY]},
-            Cell.{.{1, 2}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .WALL]},
-            Cell.{.{2, 2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .EMPTY]},
-
             Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
             Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
             Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
@@ -61,7 +56,6 @@ Levels: struct {
             Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
 
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
-            Cell.{.{0, 0}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
         ],
     };
 }
@@ -474,14 +468,76 @@ get_nearest_edge :: (x: int, y: int) -> Direction {
     return cast(Direction) min_index;
 }
 
-check_level_success :: (force_success: bool = false) {
-    beat_level := game.deck.count == 0 && game.count_hand() == 0;
-    if force_success || beat_level {
-        game.state = .LEVEL_COMPLETION;
-        game.level_has_focus = false;
-        game.highlighted_card = -1;
+fully_connected :: () -> bool {
+    using game;
+    checked: [GRID_HEIGHT][GRID_WIDTH] bool;
+    coord :: struct {x: int; y: int;};
+    unsearched: [..] coord;
+
+    // find the first non-empty cell
+    for row: grid {
+        for cell: row {
+            if cell.room != .EMPTY {
+                c: coord;
+                c.x = cell.x;
+                c.y = cell.y;
+                array_add(*unsearched, c);
+                break;
+            }
+        }
     }
 
+    while unsearched.count > 0 {
+        searching := pop(*unsearched);
+        x, y := searching.x, searching.y;
+
+        if grid[y][x].room != .EMPTY {
+            checked[y][x] = true;
+            
+            for grid[y][x].edges {
+                dir := direction_to_offset(cast(Direction) it_index);
+                neighbor_x := x + (cast(int) dir.x);
+                neighbor_y := y + (cast(int) dir.y);
+
+                if neighbor_x < 0 && neighbor_x >= GRID_WIDTH 
+                && neighbor_y < 0 && neighbor_y >= GRID_HEIGHT then continue;
+
+                if checked[neighbor_y][neighbor_x] then continue;
+
+                n: coord;
+                n.x = neighbor_x;
+                n.y = neighbor_y;
+                if it == .EMPTY || it == .DOOR then array_add(*unsearched, n);
+            }
+        }
+    }
+
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            if grid[y][x].room != .EMPTY && checked[y][x] == false
+                then return false;
+        }
+    }
+    return true;
+}
+
+check_level_success :: (force_success: bool = false) {
+    level_end := game.deck.count == 0 && game.count_hand() == 0;
+    win := false;
+    if level_end then win = fully_connected();
+
+    if force_success || level_end {
+        if force_success|| win {
+            game.state = .LEVEL_COMPLETION;
+            game.level_has_focus = false;
+            game.highlighted_card = -1;
+        } else {
+            print("YOU LOSE, TRY AGAIN\n");
+            game_reset();
+        }
+    }
+
+    // ply end -> grow_map
     if game.count_hand() == 0 {
         phase := game.level.width.count - (game.deck.count / (game.level.width.count - 1));
         if game.map_phase != phase then grow_map();
