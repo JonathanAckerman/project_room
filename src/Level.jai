@@ -212,6 +212,13 @@ render_level :: () {
             for grid[j][i].edges if it == {
                 case .WALL;
                     draw_wall(i, j, cast(Direction) it_index);
+            }
+        }
+    }
+    // okay maybe i need a draw buffer this is getting dumb
+    for j: 0..GRID_HEIGHT-1 {
+        for i: 0..GRID_WIDTH-1 {
+            for grid[j][i].edges if it == {
                 case .DOOR;
                     draw_door(i, j, cast(Direction) it_index);
             }
