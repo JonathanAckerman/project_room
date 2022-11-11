@@ -392,6 +392,19 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
             pos = edge - xy(size.x/2 - 1, 0);
             if direction == .SOUTH then pos -= xy(0, size.y - 2);
 
+            // @@@: here we put an endcap on walls that don't have a neighbor with a wall
+            //      this automatically lines up the wall with corners, but not doors since
+            //      doors do not overlap walls the same way
+            //      I could make doors work this way, but since both sides of a door have
+            //      a door in their edges, we really only want to draw one door, but which do we
+            //      choose? we could just keep it as it stands when placed but I dont think that
+            //      will adapt well to the changing walls.
+            //      Alternatively we could draw the walls at default CELL_WIDTH size, then do
+            //      a second pass looking for all corner conditions and choose to extend them.
+            //      To make this process simpler, I should probably bring parity between walls/doors
+            //      however this faces the same problem as the previous. But im inclined to select this
+            //      one since it feels more robust.
+
             left_valid, left_neighbor := get_cell(x-1, y);
             // check if we need to round a left corner
             if left_valid && left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY {
