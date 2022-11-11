@@ -173,7 +173,7 @@ render_level :: () {
     for j: 0..GRID_HEIGHT-1 {
         for i: 0..GRID_WIDTH-1 {
             // out of vision
-            color := Color.{10, 10, 10, 255};
+            color := Color.{50, 50, 50, 255};
             
             cell := grid[j][i];
             if is_on_map(i, j) {
@@ -197,6 +197,7 @@ render_level :: () {
 
             pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
             DrawRectangleV(pos, CELL_SIZE, color);
+            if debug then DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%, %", i, j)), pos, 10, 1, WHITE);
         }
     }
 
@@ -482,7 +483,7 @@ fully_connected :: () -> bool {
                 c.x = cell.x;
                 c.y = cell.y;
                 array_add(*unsearched, c);
-                break;
+                break row;
             }
         }
     }
@@ -502,7 +503,9 @@ fully_connected :: () -> bool {
                 if neighbor_x < 0 && neighbor_x >= GRID_WIDTH 
                 && neighbor_y < 0 && neighbor_y >= GRID_HEIGHT then continue;
 
-                if checked[neighbor_y][neighbor_x] then continue;
+                if checked[neighbor_y][neighbor_x] 
+                || grid[neighbor_y][neighbor_x].room == .EMPTY
+                    then continue;
 
                 n: coord;
                 n.x = neighbor_x;
