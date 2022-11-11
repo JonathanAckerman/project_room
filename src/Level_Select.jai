@@ -3,6 +3,11 @@ simulate_level_select :: () {
     gutter :: 50;
     margin :: Vector2.{tile_width, tile_width};
 
+    if game.win {
+        game.level_index += 1;
+        game.win = false;
+    }
+
     pos := margin;
     if input.clicked {
         for i: 1..Level_Sequence.count {

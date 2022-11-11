@@ -170,21 +170,21 @@ render_level :: () {
         }
     }
 
-    // rather than a draw buffer lets just loop again for walls
-    for j: 0..GRID_HEIGHT-1 {
-        for i: 0..GRID_WIDTH-1 {
-            for grid[j][i].edges if it == {
-                case .WALL;
-                    draw_wall(i, j, cast(Direction) it_index);
-            }
-        }
-    }
     // okay maybe i need a draw buffer this is getting dumb
     for j: 0..GRID_HEIGHT-1 {
         for i: 0..GRID_WIDTH-1 {
             for grid[j][i].edges if it == {
                 case .DOOR;
                     draw_door(i, j, cast(Direction) it_index);
+            }
+        }
+    }
+    // rather than a draw buffer lets just loop again for walls
+    for j: 0..GRID_HEIGHT-1 {
+        for i: 0..GRID_WIDTH-1 {
+            for grid[j][i].edges if it == {
+                case .WALL;
+                    draw_wall(i, j, cast(Direction) it_index);
             }
         }
     }
@@ -585,13 +585,12 @@ check_level_success :: (force_success: bool = false) {
     if level_end then win = fully_connected();
 
     if force_success || level_end {
-        if force_success|| win {
-            game.state = .LEVEL_COMPLETION;
-            game.level_has_focus = false;
-            game.highlighted_card = -1;
-        } else {
-            print("YOU LOSE, TRY AGAIN\n");
-            game_reset();
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+
+        if force_success || win {
+            game.win = true;
         }
     }
 
@@ -604,6 +603,7 @@ check_level_success :: (force_success: bool = false) {
 
 load_level :: (index: int) {
     using game;
+    win = false;
     state = .LEVEL;
     level_index = index;
 
@@ -643,8 +643,10 @@ load_level :: (index: int) {
     // init grid
     for * row, y: grid {
         for * cell, x: <<row {
-            cell.x = x;
-            cell.y = y;
+            (<<cell).x = x;
+            (<<cell).y = y;
+            (<<cell).room = .EMPTY;
+            for * cell.edges { <<it = .EMPTY; }
         }
     }
 
