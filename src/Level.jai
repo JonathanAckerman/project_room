@@ -39,17 +39,17 @@ Levels: struct {
             Cards.D1,
         ],
         starting_cells=.[
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2},     .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-1},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
+            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-2},   .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
             Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .EMPTY]},
             Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
             Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
 
-            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
             Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
             Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
             Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
@@ -82,39 +82,8 @@ simulate_level :: () {
                 if card.type == {
                     case .MIXED;
                         if is_valid_placement(card.cells) {
-                            mouse_x, mouse_y := get_cell_index(input.mouse_position);
-                            for * card.cells {
-                                cell_x := mouse_x + it.cell.x;
-                                cell_y := mouse_y + it.cell.y;
-
-                                if it.can_merge {
-                                    for * g, g_index: grid[cell_y][cell_x].edges {
-                                        if it.cell.edges[g_index] == .EMPTY {
-                                            <<g = .EMPTY;
-                                        }
-                                        else if <<g != .EMPTY && <<g < it.cell.edges[g_index] {
-                                            <<g = it.cell.edges[g_index];
-                                        }
-                                    }
-
-                                    if grid[cell_y][cell_x].room == .EMPTY {
-                                        for * g, g_index: grid[cell_y][cell_x].edges {
-                                            if <<g < it.cell.edges[g_index] {
-                                                <<g = it.cell.edges[g_index];
-                                            }
-                                        }
-                                    } 
-                                }
-                                else {
-                                    for * g, g_index: grid[cell_y][cell_x].edges {
-                                        if <<g < it.cell.edges[g_index] {
-                                            <<g = it.cell.edges[g_index];
-                                        }
-                                    }
-                                }
-
-                                grid[cell_y][cell_x].room = it.cell.room;
-                            }
+                            result := get_stamp_result(card.cells);
+                            for result { grid[it.y][it.x] = it; }
                             despawn(card);
                         }
                         else reset_highlight = false;
@@ -231,10 +200,12 @@ render_level :: () {
             if card.type == {
                 case .MIXED;
                     if is_valid_placement(card.cells) {
-                        x, y := get_cell_index(input.mouse_position);
-                        pos := get_cell_position(x, y) + xy(1,1);
-                        draw_card_cells(card.cells, pos, 100);
-                        intended_cursor = .POINTING_HAND;
+                        projected_result := get_stamp_result(card.cells);
+                        if projected_result.count > 0 {
+                            // pos := get_cell_position(projected_result[0].x, projected_result[0].y) + xy(1,1);
+                            draw_cells(projected_result, 255);
+                            intended_cursor = .POINTING_HAND;
+                        }
                     }
                     else {
                         draw_card_cells(card.cells, input.mouse_position - CELL_SIZE/2, 100);
@@ -246,11 +217,11 @@ render_level :: () {
                     pos := input.mouse_position;
                     direction := get_nearest_edge(x, y);
                     if is_valid_door_placement(x, y, direction, width, type) {
-                        draw_door(x, y, direction, 100);
+                        draw_door(x, y, direction, 255);
                         intended_cursor = .POINTING_HAND;
                     }
                     else {
-                        draw_door(pos - HORIZ_DOOR_SIZE/2, 100);
+                        draw_door(pos - HORIZ_DOOR_SIZE/2, 255);
                         intended_cursor = .NOT_ALLOWED;
                     }
             }
@@ -348,12 +319,35 @@ draw_level_sidebar :: () {
     }
 }
 
-draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
+draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
     color := YELLOW;
+    color.a = opacity;
     for cells {
-        if it.can_merge then color = WHITE;
-        color.a = opacity;
+        pos := xy(xx it.x, xx it.y) * (CELL_WIDTH + 1) + xy(1, 1);
+        DrawRectangleV(pos, CELL_SIZE, color);
+        DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
+        // the overlapping gutters will be darker than the borders but dgaf
 
+    }
+
+    // the jank begins
+    for cells {
+        for edge, e_index: it.edges {
+            if edge == .WALL then draw_wall(it.x, it.y, cast(Direction) e_index, opacity);
+        }
+    }
+
+    // the jank continues
+    for cells {
+        for edge, e_index: it.edges {
+            if edge == .DOOR then draw_door(it.x, it.y, cast(Direction) e_index, opacity);
+        }
+    }
+}
+draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) { // @Improve: these can be one function
+    color := YELLOW;
+    color.a = opacity;
+    for cells {
         pos := position + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
         DrawRectangleV(pos, CELL_SIZE, color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
@@ -447,6 +441,54 @@ draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;
     color.a = opacity;
     DrawRectangleV(position, HORIZ_DOOR_SIZE, color);
+}
+
+get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {
+    using game;
+    result: [..] Cell;
+
+    mouse_x, mouse_y := get_cell_index(input.mouse_position); // maybe remove this dependency
+    if mouse_x == -1 || mouse_y == -1 return .[];
+
+    for stamp_cell, stamp_index: stamp {
+        cell_x := mouse_x + stamp_cell.x;
+        cell_y := mouse_y + stamp_cell.y;
+
+        result_cell := grid[cell_y][cell_x];
+
+        // update edges
+        if stamp_cell.can_merge {
+            for * result_cell.edges {
+                if stamp_cell.edges[it_index] == .EMPTY {
+                    <<it = .EMPTY;
+                }
+                else if <<it != .EMPTY && <<it < stamp_cell.edges[it_index] {
+                    <<it = stamp_cell.edges[it_index];
+                }
+            }
+
+            if result_cell.room == .EMPTY {
+                for * result_cell.edges {
+                    if <<it < stamp_cell.edges[it_index] {
+                        <<it = stamp_cell.edges[it_index];
+                    }
+                }
+            } 
+        }
+        else {
+            for * result_cell.edges {
+                if <<it < stamp_cell.edges[it_index] {
+                    <<it = stamp_cell.edges[it_index];
+                }
+            }
+        }
+
+        // update room
+        result_cell.room = stamp_cell.room;
+
+        array_add(*result, result_cell);
+    }
+    return result;
 }
 
 get_nearest_edge :: (x: int, y: int) -> Direction {

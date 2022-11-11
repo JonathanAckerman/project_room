@@ -14,7 +14,7 @@ SIDEBAR_LEFT :: 1 + (CELL_WIDTH + 1) * GRID_WIDTH;
 
 game: struct {
     resetting: bool;
-    debug: bool = true;
+    debug: bool = false;
     state: Game_State;
     phase: Game_Phase;
     

@@ -13,7 +13,7 @@ Card :: struct {
 }
 
 Card_Cell :: struct {
-    cell: Cell;
+    using cell: Cell;
     can_merge := false;
 }
 
