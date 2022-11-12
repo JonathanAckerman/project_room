@@ -34,6 +34,7 @@ Fonts: struct {
 #load "Level_Select.jai";
 #load "Level_Completion.jai";
 #load "Utils.jai";
+#load "Cell.jai";
 
 #import "Math";
 #import "Basic";
