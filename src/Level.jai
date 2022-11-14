@@ -12,10 +12,10 @@ Level :: struct {
     for Level_Sequence assert(it.cards.count % 3 == 0, "Level %: # of cards % 3 must == 0", it_index+1);
 }
 
-Level_Sequence: [1] Level = .[
+Level_Sequence: [3] Level = .[
     Levels.TUTORIAL_1,
-    // Levels.TUTORIAL_2,
-    // Levels.TUTORIAL_3,
+    Levels.TUTORIAL_2,
+    Levels.TUTORIAL_3,
     // Levels.TUTORIAL_4,
 ];
 
@@ -55,6 +55,98 @@ Levels: struct {
             Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
 
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+        ],
+    };
+    TUTORIAL_2 :: Level.{
+        width= .[7, 11, 15, GRID_WIDTH],
+        height=.[7, 11, 15, GRID_HEIGHT],
+        cards=.[
+            Cards.R11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.R11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.D1,
+            Cards.D1,
+            Cards.D1,
+        ],
+        starting_cells=.[
+            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+
+            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+        ],
+    };
+    TUTORIAL_3 :: Level.{
+        width= .[7, 11, 15, GRID_WIDTH],
+        height=.[7, 11, 15, GRID_HEIGHT],
+        cards=.[
+            Cards.R11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.R11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.R22,
+            Cards.M22,
+
+            Cards.D1,
+            Cards.D1,
+            Cards.D1,
+
+            Cards.R11,
+            Cards.M22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.M22,
+            Cards.M22,
+
+            Cards.R11,
+            Cards.M22,
+            Cards.M22,
+
+            Cards.I11,
+            Cards.M22,
+            Cards.M22,
+
+            Cards.D1,
+            Cards.D1,
+            Cards.D1,
+        ],
+        starting_cells=.[
+            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+
+            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+            Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
         ],
     };
 }
@@ -710,7 +802,8 @@ check_level_success :: (force_success: bool = false) {
     // ply end -> grow_map
     if game.count_hand() == 0 {
         phase := game.level.width.count - (game.deck.count / (game.level.width.count - 1));
-        if game.map_phase != phase then grow_map();
+        print("% < %\n", game.map_phase, phase);
+        if game.map_phase < phase then grow_map();
     }
 }
 
