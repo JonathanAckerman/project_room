@@ -456,15 +456,14 @@ draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
         size = HORIZ_DOOR_SIZE + xy(2, 0);
         pos = edge - xy(size.x/2 - 1, 0);
         if direction == .SOUTH then pos -= xy(0, size.y - 2);
-        DrawRectangleLines(xx pos.x, xx (pos.y - 1), xx size.x, xx (size.y + 2), BLACK);
     }
     else {
         size = VERT_DOOR_SIZE + xy(0, 2);
         pos = edge - xy(0, size.y/2 - 1);
         if direction == .EAST then pos -= xy(size.x - 2, 0);
-        DrawRectangleLines(xx (pos.x - 1), xx pos.y, xx (size.x + 2), xx size.y, BLACK);
     }
     DrawRectangleV(pos, size, color);
+    DrawRectangleLines(xx pos.x, xx pos.y, xx size.x, xx size.y, BLACK);
 }
 draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;
