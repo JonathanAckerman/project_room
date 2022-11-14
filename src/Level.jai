@@ -1,3 +1,6 @@
+HORIZ_DOOR_SIZE :: Vector2.{CELL_WIDTH, 5};
+VERT_DOOR_SIZE :: Vector2.{5, CELL_WIDTH};
+
 Level :: struct {
     width:  [] int;
     height: [] int;
