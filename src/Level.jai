@@ -595,6 +595,9 @@ get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {
                     else if <<it != .EMPTY && <<it < stamp_cell.edges[it_index] {
                         <<it = stamp_cell.edges[it_index];
                     }
+                    if <<it == .EMPTY {
+                        <<it = stamp_cell.edges[it_index];
+                    }
                 }
         }
 
