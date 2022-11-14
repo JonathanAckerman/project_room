@@ -96,8 +96,10 @@ simulate_level :: () {
                         if is_valid_door_placement(x, y, direction, card.door.width, card.door.type) {
                             grid[y][x].edges[cast(int) direction] = .DOOR;
                             in_bounds, neighbor := get_neighbor(x, y, direction);
-                            opposite_direction := cast(int) opposite(direction);
-                            if in_bounds then neighbor.edges[opposite_direction] = .DOOR;
+                            if in_bounds {
+                                opposite_direction := cast(int) opposite(direction);
+                                neighbor.edges[opposite_direction] = .EMPTY;
+                            }
                             despawn(card);
                         }
                         else reset_highlight = false;
@@ -442,16 +444,27 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     DrawRectangleV(pos, size, color);
 }
 draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
-    color := BLUE;
+    color := WHITE;
     color.a = opacity;
     cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
     offset := direction_to_offset(direction);
     edge := cell_center + offset * CELL_WIDTH/2;
-    size          := ifx direction == .NORTH || direction == .SOUTH then HORIZ_DOOR_SIZE else VERT_DOOR_SIZE;
-    gutter_offset := ifx direction == .NORTH || direction == .SOUTH then xy(2,0) else xy(0,2);
-    pos := edge - size/2;
-    if direction == .EAST || direction == .SOUTH then pos += offset; // aligns doors on opposite sides
-    DrawRectangleV(pos, size + gutter_offset, color);
+    size: Vector2;
+    pos: Vector2;
+
+    if direction == .NORTH || direction == .SOUTH {
+        size = HORIZ_DOOR_SIZE + xy(2, 0);
+        pos = edge - xy(size.x/2 - 1, 0);
+        if direction == .SOUTH then pos -= xy(0, size.y - 2);
+        DrawRectangleLines(xx pos.x, xx (pos.y - 1), xx size.x, xx (size.y + 2), BLACK);
+    }
+    else {
+        size = VERT_DOOR_SIZE + xy(0, 2);
+        pos = edge - xy(0, size.y/2 - 1);
+        if direction == .EAST then pos -= xy(size.x - 2, 0);
+        DrawRectangleLines(xx (pos.x - 1), xx pos.y, xx (size.x + 2), xx size.y, BLACK);
+    }
+    DrawRectangleV(pos, size, color);
 }
 draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;

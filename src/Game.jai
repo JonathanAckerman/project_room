@@ -197,23 +197,18 @@ is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, ty
     || x == 0 && direction == .WEST
         return false;
 
-    neighbor := grid[cast(int)dir.y + y][cast(int)dir.x + x];
-
     // there is no room to attach to
-    if cell.room == .EMPTY && neighbor.room == .EMPTY return false;
+    if cell.room == .EMPTY return false;
 
     // door already exists there
     if cell.edges[cast(int) direction] == .DOOR return false;
-    if neighbor.edges[cast(int) opposite(direction)] == .DOOR return false;
 
     // there is no wall to replace
-    if neighbor.edges[cast(int) opposite(direction)] != .WALL 
-    && cell.edges[cast(int) direction] != .WALL {
+    if cell.edges[cast(int) direction] != .WALL {
         // and we are not closing off a hallway
         left := (cast(int) direction + 3) % 4;
         right := (cast(int) direction + 1) % 4;
-        if (cell.edges[left] != .WALL || cell.edges[right] != .WALL)
-        && (neighbor.edges[left] != .WALL || neighbor.edges[right] != .WALL)
+        if cell.edges[left] != .WALL || cell.edges[right] != .WALL
             return false;
     }
 
