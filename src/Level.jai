@@ -82,7 +82,15 @@ simulate_level :: () {
                     case .MIXED;
                         if is_valid_placement(card.cells) {
                             result := get_stamp_result(card.cells);
-                            for result { grid[it.y][it.x] = it; }
+                            for result { 
+                                grid[it.y][it.x] = it; 
+                                for edge, e_index: it.edges if edge == .DOOR {
+                                    in_bounds, neighbor := get_neighbor(it.x, it.y, cast(Direction) e_index);
+                                    if in_bounds {
+                                        neighbor.edges[opposite(e_index)] = .EMPTY;
+                                    }
+                                }
+                            }
                             despawn(card);
                         }
                         else reset_highlight = false;
