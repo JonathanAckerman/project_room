@@ -701,6 +701,16 @@ get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {
                 }
         }
 
+        // check neighbors for doors, if so remove wall
+        for * result_cell.edges {
+            in_bounds, neighbor := get_neighbor(cell_x, cell_y, cast(Direction) it_index);
+            if in_bounds {
+                if neighbor.edges[opposite(it_index)] == .DOOR {
+                    <<it = .EMPTY;
+                }
+            }
+        }
+
         // update room
         result_cell.room = stamp_cell.room;
 
@@ -799,10 +809,9 @@ check_level_success :: (force_success: bool = false) {
         }
     }
 
-    // ply end -> grow_map
+    // only grow in the final turns (should be evenly spaced?)
     if game.count_hand() == 0 {
         phase := game.level.width.count - (game.deck.count / (game.level.width.count - 1));
-        print("% < %\n", game.map_phase, phase);
         if game.map_phase < phase then grow_map();
     }
 }
