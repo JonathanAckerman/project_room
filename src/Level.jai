@@ -29,11 +29,7 @@ Levels: struct {
             Cards.R22,
             Cards.M22,
 
-            Cards.D1,
-            Cards.D1,
-            Cards.D1,
-
-            Cards.R11,
+            Cards.I11,
             Cards.R22,
             Cards.M22,
 
@@ -207,7 +203,6 @@ render_level :: () {
                     if is_valid_placement(card.cells) {
                         projected_result := get_stamp_result(card.cells);
                         if projected_result.count > 0 {
-                            // pos := get_cell_position(projected_result[0].x, projected_result[0].y) + xy(1,1);
                             draw_cells(projected_result, 255);
                             intended_cursor = .POINTING_HAND;
                         }
@@ -350,13 +345,28 @@ draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
     }
 }
 draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) { // @Improve: these can be one function
-    color := YELLOW;
-    color.a = opacity;
+    color: Color;
     for cells {
+        if it.type == {
+            case .NORMAL;
+                color = YELLOW;
+            case .MERGE;
+                color = WHITE;
+            case .INTERIOR;
+                color = PINK;
+        }
+        color.a = opacity;
+        
         pos := position + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
         DrawRectangleV(pos, CELL_SIZE, color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
-        // the overlapping gutters will be darker than the borders but dgaf
+
+        for edge, edge_index: it.edges {
+            if edge == .DOOR then draw_door(pos - xy(1,1), cast(Direction) edge_index);
+        }
+        for edge, edge_index: it.edges {
+            if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index);
+        }
     }
 }
 draw_card_cells_with_center :: (cells: [] Card_Cell, center: Vector2, opacity: u8 = 255) {
@@ -364,14 +374,28 @@ draw_card_cells_with_center :: (cells: [] Card_Cell, center: Vector2, opacity: u
     pixel_width := CELL_WIDTH * stamp_width;
     stamp_base_pos := center - xy(pixel_width/2, pixel_width/2);
 
-    color := YELLOW;
+    color: Color;
     for cells {
-        if it.can_merge then color = WHITE;
+        if it.type == {
+            case .NORMAL;
+                color = YELLOW;
+            case .MERGE;
+                color = WHITE;
+            case .INTERIOR;
+                color = PINK;
+        }
         color.a = opacity;
+
         pos := stamp_base_pos + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
         DrawRectangleV(pos, CELL_SIZE, color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
-        // the overlapping gutters will be darker than the borders but dgaf
+
+        for edge, edge_index: it.edges {
+            if edge == .DOOR then draw_door(pos - xy(1,1), cast(Direction) edge_index);
+        }
+        for edge, edge_index: it.edges {
+            if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index);
+        }
     }
 }
 
@@ -383,6 +407,7 @@ draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2
     DrawRectangleV(position, size, color);
 }
 
+// used to draw wall on the map
 draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     color := BLACK;
     color.a = opacity;
@@ -443,6 +468,32 @@ draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     }
     DrawRectangleV(pos, size, color);
 }
+// used to draw walls on a card_cell
+draw_wall :: (cell_pos: Vector2, direction: Direction, opacity: u8 = 255) {
+    color := BLACK;
+    color.a = opacity;
+    cell_center := cell_pos + CELL_SIZE/2.0;
+    offset := direction_to_offset(direction);
+    edge := cell_center + offset * CELL_WIDTH/2;
+    size: Vector2;
+    pos:  Vector2;
+
+    // @@@: we probably shouldn't do endcaps here
+
+    if direction == .NORTH || direction == .SOUTH {
+            size = HORIZ_DOOR_SIZE + xy(2, 0);
+            pos = edge - xy(size.x/2 - 1, 0);
+            if direction == .SOUTH then pos -= xy(0, size.y - 2);
+    }
+    else {
+        size = VERT_DOOR_SIZE + xy(0, 2);
+        pos = edge - xy(0, size.y/2 - 1);
+        if direction == .EAST then pos -= xy(size.x - 2, 0);
+    }
+    DrawRectangleV(pos, size, color);
+}
+
+// used to draw doors on the map
 draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     color := WHITE;
     color.a = opacity;
@@ -465,6 +516,33 @@ draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
     DrawRectangleV(pos, size, color);
     DrawRectangleLines(xx pos.x, xx pos.y, xx size.x, xx size.y, BLACK);
 }
+// used to draw doors on a card_cell
+draw_door :: (cell_pos: Vector2, direction: Direction, opacity: u8 = 255) {
+    color := WHITE;
+    color.a = opacity;
+    cell_center := cell_pos + CELL_SIZE/2.0;
+    offset := direction_to_offset(direction);
+    edge := cell_center + offset * CELL_WIDTH/2;
+    size: Vector2;
+    border: Vector2;
+    pos: Vector2;
+
+    if direction == .NORTH || direction == .SOUTH {
+        size = HORIZ_DOOR_SIZE + xy(2, 0);
+        border = xy(0, 1);
+        pos = edge - xy(size.x/2 - 1, 0);
+        if direction == .SOUTH then pos -= xy(0, size.y - 2);
+    }
+    else {
+        size = VERT_DOOR_SIZE + xy(0, 2);
+        border = xy(1, 0);
+        pos = edge - xy(0, size.y/2 - 1);
+        if direction == .EAST then pos -= xy(size.x - 2, 0);
+    }
+    DrawRectangleV(pos, size, color);
+    DrawRectangleLines(xx pos.x, xx pos.y, xx (size.x + border.x), xx (size.y + border.y), BLACK);
+}
+// used to draw doors on the cursor
 draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;
     color.a = opacity;
@@ -485,30 +563,39 @@ get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {
         result_cell := grid[cell_y][cell_x];
 
         // update edges
-        if stamp_cell.can_merge {
-            for * result_cell.edges {
-                if stamp_cell.edges[it_index] == .EMPTY {
-                    <<it = .EMPTY;
-                }
-                else if <<it != .EMPTY && <<it < stamp_cell.edges[it_index] {
-                    <<it = stamp_cell.edges[it_index];
-                }
-            }
-
-            if result_cell.room == .EMPTY {
+        if stamp_cell.type == {
+            case .NORMAL;
                 for * result_cell.edges {
                     if <<it < stamp_cell.edges[it_index] {
                         <<it = stamp_cell.edges[it_index];
                     }
                 }
-            } 
-        }
-        else {
-            for * result_cell.edges {
-                if <<it < stamp_cell.edges[it_index] {
-                    <<it = stamp_cell.edges[it_index];
+            case .MERGE;
+                for * result_cell.edges {
+                    if stamp_cell.edges[it_index] == .EMPTY {
+                        <<it = .EMPTY;
+                    }
+                    else if <<it != .EMPTY && <<it < stamp_cell.edges[it_index] {
+                        <<it = stamp_cell.edges[it_index];
+                    }
                 }
-            }
+
+                if result_cell.room == .EMPTY {
+                    for * result_cell.edges {
+                        if <<it < stamp_cell.edges[it_index] {
+                            <<it = stamp_cell.edges[it_index];
+                        }
+                    }
+                }
+            case .INTERIOR;
+                for * result_cell.edges {
+                    if stamp_cell.edges[it_index] == .EMPTY {
+                        <<it = .EMPTY;
+                    }
+                    else if <<it != .EMPTY && <<it < stamp_cell.edges[it_index] {
+                        <<it = stamp_cell.edges[it_index];
+                    }
+                }
         }
 
         // update room

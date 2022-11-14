@@ -14,7 +14,13 @@ Card :: struct {
 
 Card_Cell :: struct {
     using cell: Cell;
-    can_merge := false;
+    type: Card_Cell_Type;
+}
+
+Card_Cell_Type :: enum {
+    NORMAL;
+    MERGE;
+    INTERIOR;
 }
 
 Card_Type :: enum {
@@ -32,7 +38,13 @@ Cards: struct {
     R11 :: Card.{
         type=.MIXED,
         cells=.[
-            Card_Cell.{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .WALL, .WALL]}},
+            Card_Cell.{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.DOOR, .WALL, .WALL, .WALL]}},
+        ],
+    };
+    I11 :: Card.{
+        type=.MIXED,
+        cells=.[
+            Card_Cell.{.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .DOOR, .WALL, .WALL]}, .INTERIOR},
         ],
     };
     R22 :: Card.{
@@ -47,10 +59,10 @@ Cards: struct {
     M22 :: Card.{
         type=.MIXED,
         cells=.[
-            Card_Cell.{.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, true},
-            Card_Cell.{.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}, true},
-            Card_Cell.{.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}, true},
-            Card_Cell.{.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}, true},
+            Card_Cell.{.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, .MERGE},
+            Card_Cell.{.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}, .MERGE},
+            Card_Cell.{.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}, .MERGE},
+            Card_Cell.{.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}, .MERGE},
         ],
     };
 

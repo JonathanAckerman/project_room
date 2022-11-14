@@ -154,26 +154,33 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
         // cell is off map
         if !is_on_map(cell_x, cell_y) return false;
         
-        // cell overlaps
-        if game.grid[cell_y][cell_x].room != .EMPTY {
-            if it.can_merge then has_adjacency = true;
-            else return false;
-        }
+        if it.type == {
+            case .NORMAL; #through;
+            case .MERGE;
+                // cell overlaps
+                if game.grid[cell_y][cell_x].room != .EMPTY {
+                    if it.type == .MERGE then has_adjacency = true;
+                    else return false;
+                }
 
-        // check cell neighbors for adjacency
-        for dir: enum_values_as_s64(Direction) {
-            offset := direction_to_offset(cast(Direction) dir);
-            neighbor_x := cell_x + cast(int) offset.x;
-            neighbor_y := cell_y + cast(int) offset.y;
+                // check cell neighbors for adjacency
+                for dir: enum_values_as_s64(Direction) {
+                    offset := direction_to_offset(cast(Direction) dir);
+                    neighbor_x := cell_x + cast(int) offset.x;
+                    neighbor_y := cell_y + cast(int) offset.y;
 
-            // skip neighbors that are off map to prevent OOB
-            if neighbor_x < 0 || neighbor_x > GRID_WIDTH-1 
-            || neighbor_y < 0 || neighbor_y > GRID_HEIGHT-1 then continue;
+                    // skip neighbors that are off map to prevent OOB
+                    if neighbor_x < 0 || neighbor_x > GRID_WIDTH-1 
+                    || neighbor_y < 0 || neighbor_y > GRID_HEIGHT-1 then continue;
 
-            neighbor := game.grid[neighbor_y][neighbor_x];
+                    neighbor := game.grid[neighbor_y][neighbor_x];
 
-            if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY 
-                then has_adjacency = true;
+                    if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY 
+                        then has_adjacency = true;
+                }
+            case .INTERIOR;
+                if game.grid[cell_y][cell_x].room == .EMPTY return false;
+                else return true;
         }
     }
 
