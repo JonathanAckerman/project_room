@@ -33,5 +33,29 @@ render :: (using item: *Item) {
                 DrawCircleV(base_pos + (width/2) * CELL_SIZE + xy(1,1), radius, color);
                 break;
             }
+        case .TOILET;
+            on_grid, base_cell := get_cell(cells[0].x, cells[0].y);
+            color := LIGHTGRAY;
+            for cells if is_on_map(it.x, it.y) then color = WHITE;
+            base_pos := get_cell_position(base_cell.x, base_cell.y);
+            draw_pos := base_pos + CELL_SIZE/2 + xy(1,1);
+            DrawCircleV(draw_pos, CELL_WIDTH/2 - 3.0, color);
+            DrawCircleLines(xx draw_pos.x, xx draw_pos.y, CELL_WIDTH/2 - 3.0, BLACK);
+    }
+}
+
+is_blocking :: (type: Item_Type) -> bool {
+    if type == {
+        case .TREE; return true;
+        case;
+            return false;
+    }
+}
+// ???: should use enum_flags to allow multiple room types?
+get_room_requirement :: (type: Item_Type) -> Cell_Room_Type {
+    if type == {
+        case .TREE;   return .EMPTY;
+        case .TOILET; return .BATHROOM;
+        case;         return .BLANK_ROOM;
     }
 }

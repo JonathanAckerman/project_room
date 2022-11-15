@@ -36,7 +36,7 @@ Levels: struct {
 
             Cards.D1,
             Cards.D1,
-            Cards.D1,
+            Cards.TOILET,
         ],
         starting_cells=.[
             Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2},     .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
@@ -222,6 +222,21 @@ simulate_level :: () {
                             despawn(card);
                         }
                         else reset_highlight = false;
+                    case .ITEM;
+                        x, y := get_cell_index(input.mouse_position);
+                        direction := get_nearest_edge(x, y);
+                        if is_valid_item_placement(x, y, direction, card.item) {
+                            absolute_cells: [..] Item.coord;
+                            for card.item.cells {
+                                c: Item.coord;
+                                c.x = it.x + x;
+                                c.y = it.y + y;
+                                array_add(*absolute_cells, c);
+                            }
+                            card.item.cells = absolute_cells;
+                            spawn(card.item);
+                            despawn(card);
+                        }
                 }
             }
         }
@@ -349,6 +364,20 @@ render_level :: () {
                         draw_door(pos - HORIZ_DOOR_SIZE/2, 255);
                         intended_cursor = .NOT_ALLOWED;
                     }
+                case .ITEM;
+                    using card.item;
+                    x, y := get_cell_index(input.mouse_position);
+                    pos := input.mouse_position;
+                    direction := get_nearest_edge(x, y);
+                    if is_valid_item_placement(x, y, direction, card.item) {
+                        draw_item(x, y, direction, 255);
+                        intended_cursor = .POINTING_HAND;
+                    }
+                    else {
+                        draw_item(pos, 255);
+                        intended_cursor = .NOT_ALLOWED;
+                    }
+
             }
         }
     }
@@ -419,6 +448,8 @@ draw_level_sidebar :: () {
                     draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
+                case .ITEM;
+                    draw_item_representation(card.item.type, card_center);
             }
         }
         card, gone = from_handle(hand[1]);
@@ -429,6 +460,8 @@ draw_level_sidebar :: () {
                     draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
+                case .ITEM;
+                    draw_item_representation(card.item.type, card_center);
             }
         }
         card, gone = from_handle(hand[2]);
@@ -439,6 +472,8 @@ draw_level_sidebar :: () {
                     draw_card_cells_with_center(card.cells, card_center);
                 case .DOOR;
                     draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
+                case .ITEM;
+                    draw_item_representation(card.item.type, card_center);
             }
         }
     }
@@ -528,8 +563,14 @@ draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2
     size := xy(100, 30);
     color := BLUE;
     color.a = opacity;
-
     DrawRectangleV(position, size, color);
+}
+draw_item_representation :: (type: Item_Type, position: Vector2, opacity: u8 = 255) {
+    radius := 40.0;
+    color := WHITE;
+    color.a = opacity;
+    DrawCircleV(position, radius, color);
+    DrawCircleLines(xx position.x, xx position.y, radius, BLACK);
 }
 
 // used to draw wall on the map
@@ -672,6 +713,20 @@ draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;
     color.a = opacity;
     DrawRectangleV(position, HORIZ_DOOR_SIZE, color);
+}
+
+draw_item :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
+    color := WHITE;
+    color.a = opacity;
+    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
+    DrawCircleV(cell_center, CELL_WIDTH/2 - 3.0, color);
+    DrawCircleLines(xx cell_center.x, xx cell_center.y, CELL_WIDTH/2 - 3.0, BLACK);
+}
+draw_item :: (position: Vector2, opacity: u8 = 255) {
+    color := WHITE;
+    color.a = opacity;
+    DrawCircleV(position, CELL_WIDTH/2 - 3.0, color);
+    DrawCircleLines(xx position.x, xx position.y, CELL_WIDTH/2 - 3.0, BLACK);
 }
 
 get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {

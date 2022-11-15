@@ -9,6 +9,7 @@ Card :: struct {
             width: int;
             type: Card_Door_Type;
         }
+        item: Item;
     }
 }
 
@@ -26,6 +27,7 @@ Card_Cell_Type :: enum {
 Card_Type :: enum {
     MIXED;
     DOOR;
+    ITEM;
 }
 
 Card_Door_Type :: enum {
@@ -77,6 +79,16 @@ Cards: struct {
         type=.DOOR,
         door=.{
             width=2,
+        }
+    };
+
+    // Items ----------------------------------------------------------------------
+    TOILET :: Card.{
+        type=.ITEM,
+        item=.{
+            type=.TOILET, cells=.[
+                .{0, 0}, // @Note: these are relative positions
+            ],
         }
     };
 }

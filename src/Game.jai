@@ -152,7 +152,7 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
 
         // collides with an item that is blocking
         for context.entity_storage._Item {
-            if cast(int) it.type <= cast(int) Item_Type.TREE {
+            if is_blocking(it.type) {
                 for it.cells {
                     if it.x == cell_x && it.y == cell_y return false;
                 }
@@ -225,6 +225,26 @@ is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, ty
     }
 
     return true;    
+}
+
+is_valid_item_placement :: (x: int, y: int, direction: Direction, item: Item) -> bool {
+    using game;
+    // item is outside of map
+    if !is_on_map(x, y) return false;
+
+    cell := grid[y][x];
+
+    // cannot place this item type in this room type
+    if cell.room != .BLANK_ROOM && cell.room != get_room_requirement(item.type) return false;
+
+    // item already occupies this cell
+    for context.entity_storage._Item {
+        for it.cells {
+            if it.x == x && it.y == y return false;
+        }
+    }
+
+    return true;
 }
 
 grow_map :: () {
