@@ -149,6 +149,15 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
         cell_y := mouse_y + it.cell.y;
         // cell is off map
         if !is_on_map(cell_x, cell_y) return false;
+
+        // collides with an item that is blocking
+        for context.entity_storage._Item {
+            if cast(int) it.type <= cast(int) Item_Type.TREE {
+                for it.cells {
+                    if it.x == cell_x && it.y == cell_y return false;
+                }
+            }
+        }
         
         if it.type == {
             case .NORMAL; #through;

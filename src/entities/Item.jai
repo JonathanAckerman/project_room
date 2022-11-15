@@ -10,8 +10,10 @@ Item :: struct {
 }
 
 Item_Type :: enum {
+    // Blocking items
     TREE;
 
+    // Non-blocking items (but room rules still apply)
     TOILET;
     BED;
     FIREPLACE;
