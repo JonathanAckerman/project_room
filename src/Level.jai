@@ -6,6 +6,7 @@ Level :: struct {
     height: [] int;
     cards:  [] Card;
     starting_cells: [] Cell;
+    starting_items: [] Item;
 }
 
 #run {
@@ -55,6 +56,28 @@ Levels: struct {
             Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
 
             Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+        ],
+        starting_items=.[
+            Item.{type=.TREE, cells=.[
+                .{GRID_WIDTH/2+5, GRID_HEIGHT/2+5},
+            ]},
+            Item.{type=.TREE, cells=.[
+                .{GRID_WIDTH/2+7, GRID_HEIGHT/2+7},
+                .{GRID_WIDTH/2+8, GRID_HEIGHT/2+7},
+                .{GRID_WIDTH/2+7, GRID_HEIGHT/2+8},
+                .{GRID_WIDTH/2+8, GRID_HEIGHT/2+8},
+            ]},
+            Item.{type=.TREE, cells=.[
+                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+11},
+                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+11},
+                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+11},
+                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+12},
+                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+12},
+                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+12},
+                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+13},
+                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+13},
+                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+13},
+            ]},
         ],
     };
     TUTORIAL_2 :: Level.{
@@ -291,6 +314,8 @@ render_level :: () {
     }
 
     if state == .LEVEL then draw_level_sidebar();
+
+    for _Item render(it);
 
     //
     // draw ghosts
@@ -844,6 +869,9 @@ load_level :: (index: int) {
     for context.entity_storage._Card {
         despawn(it);
     }
+    for context.entity_storage._Item {
+        despawn(it);
+    }
     phase = .ROOM_PLACEMENT;
     intended_cursor = .CROSSHAIR;
     highlighted_card = -1;
@@ -867,5 +895,9 @@ load_level :: (index: int) {
 
     for level.starting_cells {
         grid[it.y][it.x] = it;
+    }
+
+    for level.starting_items {
+        spawn(it);
     }
 }

@@ -29,6 +29,7 @@ game: struct {
     current_level_height: int;
 
     deck: [..] Handle(Card);
+    // items: [..] Handle(Item);
 
     player_deck: [..] Card;
 
@@ -116,11 +117,6 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     y := y_index * (CELL_WIDTH + 1);
     return xy(x, y);
 }
-// get_absolute_cell_position :: (x_index: int, y_index: int) -> Vector2 {
-//     x := 1 + x_index * (CELL_WIDTH + 1);
-//     y := 1 + y_index * (CELL_WIDTH + 1);
-//     return xy(x, y);
-// }
 
 get_cell :: (x: int, y: int) -> bool, *Cell {
     if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, null;

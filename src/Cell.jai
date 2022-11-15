@@ -9,7 +9,11 @@ Cell :: struct {
 
 Cell_Room_Type :: enum {
     EMPTY;
-    BLANK_ROOM;
+    BLANK_ROOM; // any furniture (closet, den, living, dining)
+    HALLWAY;    // no furniture
+    BEDROOM;    // bed, endtable, lamp, fireplace, etc.
+    KITCHEN;    // fridge, laundry, sink, trash, etc.
+    BATHROOM;   // toilet, sink, bath, etc.
 }
 
 Border_Type :: enum {
