@@ -29,8 +29,6 @@ game: struct {
     current_level_height: int;
 
     deck: [..] Handle(Card);
-    // items: [..] Handle(Item);
-
     player_deck: [..] Card;
 
     hand: [3] Handle(Card);

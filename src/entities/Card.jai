@@ -86,9 +86,7 @@ Cards: struct {
     TOILET :: Card.{
         type=.ITEM,
         item=.{
-            type=.TOILET, cells=.[
-                .{0, 0}, // @Note: these are relative positions
-            ],
+            type=.TOILET, // @ctor: cells will be filled by ctor
         }
     };
 }

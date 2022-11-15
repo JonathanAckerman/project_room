@@ -226,14 +226,10 @@ simulate_level :: () {
                         x, y := get_cell_index(input.mouse_position);
                         direction := get_nearest_edge(x, y);
                         if is_valid_item_placement(x, y, direction, card.item) {
-                            absolute_cells: [..] Item.coord;
-                            for card.item.cells {
-                                c: Item.coord;
-                                c.x = it.x + x;
-                                c.y = it.y + y;
-                                array_add(*absolute_cells, c);
+                            for * card.item.cells {
+                                it.x += x;
+                                it.y += y;
                             }
-                            card.item.cells = absolute_cells;
                             spawn(card.item);
                             despawn(card);
                         }
@@ -936,7 +932,10 @@ load_level :: (index: int) {
     for level.cards array_add(*shuffle, it);
     for player_deck array_add(*shuffle, it);
     fisher_yates_shuffle(*shuffle);
-    for shuffle array_add(*deck, spawn(it));
+    for shuffle {
+        if it.type == .ITEM then init(*it.item);
+        array_add(*deck, spawn(it));
+    }
 
     // init grid
     for * row, y: grid {
@@ -955,4 +954,8 @@ load_level :: (index: int) {
     for level.starting_items {
         spawn(it);
     }
+}
+
+rotate_stamp :: (cells: [] Card_Cell, counter_clockwise: bool) {
+
 }

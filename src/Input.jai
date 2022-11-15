@@ -13,6 +13,30 @@ handle_input :: () {
     } 
     else input.clicked = false;
 
+    if IsKeyPressed(xx KeyboardKey.ESCAPE) {
+        if game.state != .LEVEL return;
+        game.highlighted_card = -1;
+        game.intended_cursor = .CROSSHAIR;
+    }
+    if IsKeyPressed(xx KeyboardKey.Q) {
+        if game.state != .LEVEL return;
+        if game.highlighted_card == -1 return;
+        card, gone := from_handle(game.hand[game.highlighted_card]);
+        if !gone {
+            if card.type != .MIXED return;
+            rotate_stamp(card.cells, counter_clockwise = true);
+        }
+    }
+    if IsKeyPressed(xx KeyboardKey.E) {
+        if game.state != .LEVEL return;
+        if game.highlighted_card == -1 return;
+        card, gone := from_handle(game.hand[game.highlighted_card]);
+        if !gone {
+            if card.type != .MIXED return;
+            rotate_stamp(card.cells, counter_clockwise = true);
+        }
+    }
+
     if IsKeyPressed(xx KeyboardKey.F5) {
         game.resetting = true;
     }
@@ -36,11 +60,6 @@ handle_input :: () {
             game.level_index += 1;
             load_level(game.level_index);
         }
-    }
-    if IsKeyPressed(xx KeyboardKey.ESCAPE) {
-        if game.state != .LEVEL return;
-        game.highlighted_card = -1;
-        game.intended_cursor = .CROSSHAIR;
     }
 }
 

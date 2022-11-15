@@ -1,7 +1,7 @@
 Item :: struct {
     using #as entity: Entity;
     type: Item_Type;
-    cells: [] coord;
+    cells: [..] coord;
 
     coord :: struct {
         x: int;
@@ -17,6 +17,13 @@ Item_Type :: enum {
     TOILET;
     BED;
     FIREPLACE;
+}
+
+init :: (using item: *Item) {
+    if item.type == {
+        case .TOILET;
+            array_copy(*item.cells, TOILET_CELLS);
+    }
 }
 
 render :: (using item: *Item) {
@@ -59,3 +66,5 @@ get_room_requirement :: (type: Item_Type) -> Cell_Room_Type {
         case;         return .BLANK_ROOM;
     }
 }
+
+TOILET_CELLS :: Item.coord.[.{0,0}];
