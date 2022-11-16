@@ -280,7 +280,7 @@ render_level :: () {
             if is_in_vision(x, y) {
                 for grid[y][x].edges if it == {
                     case .DOOR;
-                        draw_door(x, y, cast(Direction) it_index);
+                        draw_door(get_cell_position(x, y), cast(Direction) it_index);
                 }
             }
         }
@@ -291,7 +291,7 @@ render_level :: () {
             if is_in_vision(x, y) {
                 for grid[y][x].edges if it == {
                     case .WALL;
-                        draw_wall(x, y, cast(Direction) it_index);
+                        draw_wall(get_cell_position(x, y), cast(Direction) it_index);
                 }
             }
         }
@@ -326,7 +326,7 @@ render_level :: () {
                     pos := input.mouse_position;
                     direction := get_nearest_edge(x, y);
                     if is_valid_door_placement(x, y, direction, width, type) {
-                        draw_door(x, y, direction, 255);
+                        draw_door(get_cell_position(x, y), direction, 255);
                         intended_cursor = .POINTING_HAND;
                     }
                     else {
@@ -429,149 +429,164 @@ draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
         // the overlapping gutters will be darker than the borders but dgaf
 
         for edge, edge_index: it.edges {
-            if edge == .DOOR then draw_door(it.x, it.y, cast(Direction) edge_index, opacity);
+            if edge == .DOOR then draw_door(get_cell_position(it.x, it.y), cast(Direction) edge_index, opacity);
         }
         for edge, edge_index: it.edges {
-            if edge == .WALL then draw_wall(it.x, it.y, cast(Direction) edge_index, opacity);
+            if edge == .WALL then draw_wall(get_cell_position(it.x, it.y), cast(Direction) edge_index);
         }
     }
 }
 draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
-    color: Color;
     for cells {
-        if it.type == {
-            case .NORMAL;
-                color = YELLOW;
-            case .MERGE;
-                color = WHITE;
-            case .INTERIOR;
-                color = PINK;
-        }
+        color := room_type_color(it.room);
         color.a = opacity;
-        
         pos := position + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
-        DrawRectangleV(pos, CELL_SIZE, color);
+        DrawRectangleV(pos - xy(0,1), CELL_SIZE + xy(0,1), color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
 
         for edge, edge_index: it.edges {
             if edge == .DOOR then draw_door(pos - xy(1,1), cast(Direction) edge_index);
         }
         for edge, edge_index: it.edges {
-            if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index);
+            if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index, it.type);
         }
     }
 }
 
-// used to draw wall on the map
-draw_wall :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
-    color := BLACK;
-    color.a = opacity;
-    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
-    offset := direction_to_offset(direction);
-    edge := cell_center + offset * CELL_WIDTH/2;
-    size: Vector2;
-    pos:  Vector2;
-
-    if direction == .NORTH || direction == .SOUTH {
-            size = HORIZ_DOOR_SIZE + xy(2, 0);
-            pos = edge - xy(size.x/2 - 1, 0);
-            if direction == .SOUTH then pos -= xy(0, size.y - 2);
-
-            // @@@: here we put an endcap on walls that don't have a neighbor with a wall
-            //      this automatically lines up the wall with corners, but not doors since
-            //      doors do not overlap walls the same way
-            //      I could make doors work this way, but since both sides of a door have
-            //      a door in their edges, we really only want to draw one door, but which do we
-            //      choose? we could just keep it as it stands when placed but I dont think that
-            //      will adapt well to the changing walls.
-            //      Alternatively we could draw the walls at default CELL_WIDTH size, then do
-            //      a second pass looking for all corner conditions and choose to extend them.
-            //      To make this process simpler, I should probably bring parity between walls/doors
-            //      however this faces the same problem as the previous. But im inclined to select this
-            //      one since it feels more robust.
-
-            left_valid, left_neighbor := get_cell(x-1, y);
-            // check if we need to round a left corner
-            if left_valid && left_neighbor.room != .EMPTY && left_neighbor.edges[cast(int) direction] == .EMPTY {
-                size += xy(VERT_DOOR_SIZE.x - 1, 0);
-                pos -= xy(VERT_DOOR_SIZE.x - 1, 0);
-            }
-
-            // check if we need to round a right corner
-            right_valid, right_neighbor := get_cell(x+1, y);
-            if right_valid && right_neighbor.room != .EMPTY && right_neighbor.edges[cast(int) direction] == .EMPTY {
-                size += xy(VERT_DOOR_SIZE.x - 1, 0);
-            }
-    }
-    else {
-        size = VERT_DOOR_SIZE + xy(0, 2);
-        pos = edge - xy(0, size.y/2 - 1);
-        if direction == .EAST then pos -= xy(size.x - 2, 0);
-        
-        // check if we need to round an up corner
-        up_valid, up_neighbor := get_cell(x, y-1);
-        if up_valid && up_neighbor.room != .EMPTY && up_neighbor.edges[cast(int) direction] == .EMPTY {
-            size += xy(0, HORIZ_DOOR_SIZE.y - 1);
-            pos -= xy(0, HORIZ_DOOR_SIZE.y - 1);
-        }
-
-        // check if we need to round a down corner
-        down_valid, down_neighbor := get_cell(x, y+1);
-        if down_valid && down_neighbor.room != .EMPTY && down_neighbor.edges[cast(int) direction] == .EMPTY {
-            size += xy(0, HORIZ_DOOR_SIZE.y - 1);
-        }
-    }
-    DrawRectangleV(pos, size, color);
-}
-// used to draw walls on a card_cell
-draw_wall :: (cell_pos: Vector2, direction: Direction, opacity: u8 = 255) {
-    color := BLACK;
-    color.a = opacity;
+draw_wall :: (cell_pos: Vector2, direction: Direction, style: Card_Cell_Type = .NORMAL) {
     cell_center := cell_pos + CELL_SIZE/2.0;
     offset := direction_to_offset(direction);
     edge := cell_center + offset * CELL_WIDTH/2;
-    size: Vector2;
-    pos:  Vector2;
+    pieces: [..] Rectangle;
 
-    // @@@: we probably shouldn't do endcaps here
+    if style == {
+        case .NORMAL;
+            rec: Rectangle;
+            if direction == .NORTH || direction == .SOUTH {
+                size := HORIZ_DOOR_SIZE + xy(2, 0);
+                pos := edge - xy(size.x/2 - 1, 0);
+                if direction == .SOUTH then pos -= xy(0, size.y - 2);
 
-    if direction == .NORTH || direction == .SOUTH {
-            size = HORIZ_DOOR_SIZE + xy(2, 0);
-            pos = edge - xy(size.x/2 - 1, 0);
-            if direction == .SOUTH then pos -= xy(0, size.y - 2);
+                rec.x = pos.x;
+                rec.y = pos.y;
+                rec.width = size.x;
+                rec.height = size.y;
+                array_add(*pieces, rec);
+            }
+            else {
+                size := VERT_DOOR_SIZE + xy(0, 2);
+                pos := edge - xy(0, size.y/2 - 1);
+                if direction == .EAST then pos -= xy(size.x - 2, 0);
+
+                rec.x = pos.x;
+                rec.y = pos.y;
+                rec.width = size.x;
+                rec.height = size.y;
+                array_add(*pieces, rec);
+            }
+        case .MERGE;
+            piece_size :: 7;
+            gutter_size :: 5;
+            width: float;
+            height: float;
+            pos: Vector2;
+            offset: Vector2;
+
+            if direction == .NORTH || direction == .SOUTH {
+                size := HORIZ_DOOR_SIZE + xy(2, 0);
+                pos = edge - xy(size.x/2 - 1, 0);
+                if direction == .SOUTH then pos -= xy(0, size.y - 2);
+                width = piece_size;
+                height = size.y;
+                offset = xy(piece_size + gutter_size, 0);
+            }
+            else {
+                size := VERT_DOOR_SIZE + xy(0, 2);
+                pos = edge - xy(0, size.y/2 - 1);
+                if direction == .EAST then pos -= xy(size.x - 2, 0);
+                width = size.x;
+                height = piece_size;
+                offset = xy(0, piece_size + gutter_size);
+            }
+
+            for 0..2 {
+                rec: Rectangle;
+                rec.x = pos.x;
+                rec.y = pos.y;
+                rec.width = width;
+                rec.height = height;
+                array_add(*pieces, rec);
+                pos += offset;
+            }
+        case .INTERIOR;
+            beam1: Rectangle;
+            beam2: Rectangle;
+            wall: Rectangle;
+            if direction == .NORTH || direction == .SOUTH {
+                size := HORIZ_DOOR_SIZE + xy(2, 0);
+                pos := edge - xy(size.x/2 - 1, 0);
+                if direction == .SOUTH then pos -= xy(0, size.y);
+
+                beam1.x = pos.x;
+                beam1.y = pos.y;
+                beam1.width  = size.y;
+                beam1.height = size.y;
+                array_add(*pieces, beam1);
+                
+                pos.x += beam1.width;
+                if direction == .NORTH then pos.y += 3;
+
+                wall.x = pos.x;
+                wall.y = pos.y;
+                wall.width  = size.x - size.y * 2;
+                wall.height = 2;
+                array_add(*pieces, wall);
+
+                pos.x += wall.width;
+                if direction == .NORTH then pos.y -= 3;
+
+                beam2.x = pos.x;
+                beam2.y = pos.y;
+                beam2.width  = size.y;
+                beam2.height = size.y;
+                array_add(*pieces, beam2);
+            }
+            else {
+                size := VERT_DOOR_SIZE + xy(0, 2);
+                pos := edge - xy(0, size.y/2);
+                if direction == .WEST then pos += xy(1, 0);
+                if direction == .EAST then pos -= xy(size.x - 1, 0);
+
+                beam1.x = pos.x;
+                beam1.y = pos.y;
+                beam1.width  = size.x;
+                beam1.height = size.x;
+                array_add(*pieces, beam1);
+                
+                pos.y += beam1.height;
+                if direction == .WEST then pos.x += 3;
+
+                wall.x = pos.x;
+                wall.y = pos.y;
+                wall.width  = 2;
+                wall.height = size.y - size.x * 2;
+                array_add(*pieces, wall);
+
+                pos.y += wall.height;
+                if direction == .WEST then pos.x -= 3;
+
+                beam2.x = pos.x;
+                beam2.y = pos.y;
+                beam2.width  = size.x;
+                beam2.height = size.x;
+                array_add(*pieces, beam2);
+            }
     }
-    else {
-        size = VERT_DOOR_SIZE + xy(0, 2);
-        pos = edge - xy(0, size.y/2 - 1);
-        if direction == .EAST then pos -= xy(size.x - 2, 0);
-    }
-    DrawRectangleV(pos, size, color);
+
+    for pieces DrawRectangleRec(it, BLACK);
 }
 
 // used to draw doors on the map
-draw_door :: (x: int, y: int, direction: Direction, opacity: u8 = 255) {
-    color := WHITE;
-    color.a = opacity;
-    cell_center := get_cell_position(x, y) + CELL_SIZE/2.0;
-    offset := direction_to_offset(direction);
-    edge := cell_center + offset * CELL_WIDTH/2;
-    size: Vector2;
-    pos: Vector2;
-
-    if direction == .NORTH || direction == .SOUTH {
-        size = HORIZ_DOOR_SIZE + xy(2, 0);
-        pos = edge - xy(size.x/2 - 1, 0);
-        if direction == .SOUTH then pos -= xy(0, size.y - 2);
-    }
-    else {
-        size = VERT_DOOR_SIZE + xy(0, 2);
-        pos = edge - xy(0, size.y/2 - 1);
-        if direction == .EAST then pos -= xy(size.x - 2, 0);
-    }
-    DrawRectangleV(pos, size, color);
-    DrawRectangleLines(xx pos.x, xx pos.y, xx size.x, xx size.y, BLACK);
-}
-// used to draw doors on a card_cell
 draw_door :: (cell_pos: Vector2, direction: Direction, opacity: u8 = 255) {
     color := WHITE;
     color.a = opacity;
@@ -579,24 +594,22 @@ draw_door :: (cell_pos: Vector2, direction: Direction, opacity: u8 = 255) {
     offset := direction_to_offset(direction);
     edge := cell_center + offset * CELL_WIDTH/2;
     size: Vector2;
-    border: Vector2;
     pos: Vector2;
 
     if direction == .NORTH || direction == .SOUTH {
         size = HORIZ_DOOR_SIZE + xy(2, 0);
-        border = xy(0, 1);
         pos = edge - xy(size.x/2 - 1, 0);
         if direction == .SOUTH then pos -= xy(0, size.y - 2);
     }
     else {
         size = VERT_DOOR_SIZE + xy(0, 2);
-        border = xy(1, 0);
         pos = edge - xy(0, size.y/2 - 1);
         if direction == .EAST then pos -= xy(size.x - 2, 0);
     }
-    DrawRectangleV(pos, size, color);
-    DrawRectangleLines(xx pos.x, xx pos.y, xx (size.x + border.x), xx (size.y + border.y), BLACK);
+    DrawRectangleV(pos, size - xy(0,1), color);
+    DrawRectangleLines(xx pos.x, xx pos.y, xx size.x, xx size.y, BLACK);
 }
+
 // used to draw doors on the cursor
 draw_door :: (position: Vector2, opacity: u8 = 255) {
     color := BLUE;

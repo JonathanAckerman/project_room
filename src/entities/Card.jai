@@ -75,7 +75,7 @@ Cards: struct {
 
     I11 :: Card.{type=.MIXED, stamp.type=.I11};
     I11_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .DOOR, .WALL, .WALL]}, type=.INTERIOR},
+        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .WALL, .WALL]}, type=.INTERIOR},
     ];
 
     M22 :: Card.{type=.MIXED, stamp.type=.M22};
