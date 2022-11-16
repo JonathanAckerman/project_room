@@ -29,6 +29,12 @@ Direction :: enum {
     WEST;
 }
 
+Visibility :: enum {
+    HIDDEN;
+    VISIBLE;
+    ON_MAP;
+}
+
 direction_to_offset :: (dir: Direction) -> Vector2 {
     if #complete dir == {
         case .NORTH; return .{0, -1};
@@ -45,4 +51,33 @@ opposite :: (dir: Direction) -> Direction {
 opposite :: (dir_index: int) -> int {
     i := dir_index + 2;
     return i % 4;
+}
+
+room_type_color :: (type: Cell_Room_Type, x: int, y: int) -> Color {
+    color: Color;
+    if #complete type == {
+        case .EMPTY;
+            if is_on_map(x, y)
+                return Color.{150,  150,  150,  255};
+            else if is_in_vision(x, y) 
+                return Color.{100,  100,  100,  255};
+            else 
+                return Color.{50,   50,   50,   255};
+
+        case .BLANK_ROOM;   color = YELLOW;
+        case .HALLWAY;      color = GREEN;
+        case .BEDROOM;      color = BEIGE;
+        case .KITCHEN;      color = ORANGE;
+        case .BATHROOM;     color = WHITE;
+    }
+
+    if !is_in_vision(x, y) 
+        return Color.{50, 50, 50, 255};
+    if !is_on_map(x, y) {
+        color.r = cast(u8) clamp(color.r * 0.5, 0, 255);
+        color.g = cast(u8) clamp(color.g * 0.5, 0, 255);
+        color.b = cast(u8) clamp(color.b * 0.5, 0, 255);
+    }
+    
+    return color;
 }

@@ -67,7 +67,10 @@ LEVELS :: struct {
         .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
         .{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
 
-        .{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+        // test in vision
+        .{.{GRID_WIDTH/2-4, GRID_HEIGHT/2-4}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+        // test out of vision
+        .{.{GRID_WIDTH/2-6, GRID_HEIGHT/2-6}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
     ];
 
     TUTORIAL_1_ITEMS :: Item.[
@@ -233,17 +236,9 @@ simulate_level :: () {
         }
         
         // hand clicked
-        if is_mouse_over(HAND_POS[0], CARD_SIZE) && exists(hand[0]) {
-            reset_highlight = highlighted_card == 0;
-            highlighted_card = 0;
-        }
-        if is_mouse_over(HAND_POS[1], CARD_SIZE) && exists(hand[1]) {
-            reset_highlight = highlighted_card == 1;
-            highlighted_card = 1;
-        }
-        if is_mouse_over(HAND_POS[2], CARD_SIZE) && exists(hand[2]) {
-            reset_highlight = highlighted_card == 2;
-            highlighted_card = 2;
+        for hand if is_mouse_over(HAND_POS[it_index], CARD_SIZE) && exists(it) {
+            reset_highlight = highlighted_card == it_index;
+            highlighted_card = it_index;
         }
         
         if reset_highlight {
@@ -269,52 +264,35 @@ render_level :: () {
     //
     // draw grid cells
     //
-    for j: 0..GRID_HEIGHT-1 {
-        for i: 0..GRID_WIDTH-1 {
-            // out of vision
-            color := Color.{50, 50, 50, 255};
-            
-            cell := grid[j][i];
-            if is_on_map(i, j) {
-                if cell.room == {
-                    case .EMPTY;
-                        color = GRAY;
-                    case .BLANK_ROOM;
-                        color = YELLOW;
-                }
-            }
-            else if is_in_vision(i, j) {
-                if cell.room == {
-                    case .EMPTY;
-                        color = DARKGRAY;
-                    case .BLANK_ROOM;
-                        color = YELLOW;
-                        color.r -= 120;
-                        color.g -= 120;
-                }
-            }
-
-            pos := xy(1 + i * CELL_WIDTH + i, 1 + j * CELL_WIDTH + j);
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            color := room_type_color(grid[y][x].room, x, y);
+            cell := grid[y][x];
+            pos := xy(1 + x * CELL_WIDTH + x, 1 + y * CELL_WIDTH + y);
             DrawRectangleV(pos, CELL_SIZE, color);
-            if debug then DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%, %", i, j)), pos, 10, 1, WHITE);
+            if debug then DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%, %", x, y)), pos, 10, 1, WHITE);
         }
     }
 
-    // okay maybe i need a draw buffer this is getting dumb
-    for j: 0..GRID_HEIGHT-1 {
-        for i: 0..GRID_WIDTH-1 {
-            for grid[j][i].edges if it == {
-                case .DOOR;
-                    draw_door(i, j, cast(Direction) it_index);
+    // draw doors on grid
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            if is_in_vision(x, y) {
+                for grid[y][x].edges if it == {
+                    case .DOOR;
+                        draw_door(x, y, cast(Direction) it_index);
+                }
             }
         }
     }
-    // rather than a draw buffer lets just loop again for walls
-    for j: 0..GRID_HEIGHT-1 {
-        for i: 0..GRID_WIDTH-1 {
-            for grid[j][i].edges if it == {
-                case .WALL;
-                    draw_wall(i, j, cast(Direction) it_index);
+    // draw walls on grid
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            if is_in_vision(x, y) {
+                for grid[y][x].edges if it == {
+                    case .WALL;
+                        draw_wall(x, y, cast(Direction) it_index);
+                }
             }
         }
     }

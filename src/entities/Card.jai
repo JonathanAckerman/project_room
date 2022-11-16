@@ -67,7 +67,7 @@ Cards: struct {
 
     R22 :: Card.{type=.MIXED, stamp.type=.R22};
     R22_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}},
+        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, type=.MERGE},
         .{cell=.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}},
         .{cell=.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}},
         .{cell=.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}},
