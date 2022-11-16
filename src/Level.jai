@@ -396,24 +396,6 @@ draw_level_sidebar :: () {
     //
     {
         DrawTextEx(Fonts.bahnschrift, "Hand", HAND_POS[0] - xy(0, 50), 32, 1, WHITE);
-    
-        color0 := DARKGRAY;
-        if exists(hand[0]) {
-            color0 = LIGHTGRAY;
-            if level_has_focus && is_mouse_over(HAND_POS[0], CARD_SIZE) then color0 = WHITE;
-        }
-
-        color1 := DARKGRAY;
-        if exists(hand[1]) {
-            color1 = LIGHTGRAY;
-            if level_has_focus && is_mouse_over(HAND_POS[1], CARD_SIZE) then color1 = WHITE;
-        }
-
-        color2 := DARKGRAY;
-        if exists(hand[2]) {
-            color2 = LIGHTGRAY;
-            if level_has_focus && is_mouse_over(HAND_POS[2], CARD_SIZE) then color2 = WHITE;
-        }
 
         // highlighted_card outer glow
         if highlighted_card > -1 {
@@ -425,13 +407,16 @@ draw_level_sidebar :: () {
             DrawRectangleLinesEx(r, 8.0, BLUE);
         }
 
-        DrawRectangleV(HAND_POS[0], xy(185, 250), ifx highlighted_card == 0 then WHITE else color0);
-        DrawRectangleV(HAND_POS[1], xy(185, 250), ifx highlighted_card == 1 then WHITE else color1);
-        DrawRectangleV(HAND_POS[2], xy(185, 250), ifx highlighted_card == 2 then WHITE else color2);
-
-        // @@@: Factor this to not have to check twice
-        // draw room representation on hand cards
         for hand {
+            // draw card background
+            color := DARKGRAY;
+            if exists(it) {
+                color = LIGHTGRAY;
+                if level_has_focus && is_mouse_over(HAND_POS[it_index], CARD_SIZE) then color = WHITE;
+            }
+            DrawRectangleV(HAND_POS[it_index], xy(185, 250), ifx highlighted_card == it_index then WHITE else color);
+
+            // draw representation on cards
             card, gone := from_handle(it);
             if !gone {
                 card_center := HAND_POS[it_index] + CARD_SIZE/2.0;
@@ -442,9 +427,14 @@ draw_level_sidebar :: () {
                         stamp_base_pos := card_center - xy(pixel_width/2, pixel_width/2);
                         draw_card_cells(card.stamp.cells, stamp_base_pos);
                     case .DOOR;
-                        draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
+                        color := BLUE;
+                        size := xy(100, 30);
+                        DrawRectangleV(card_center - xy(50, 15), size, color);
                     case .ITEM;
-                        draw_item_representation(card.item.type, card_center);
+                        color := WHITE;
+                        radius := 40.0;
+                        DrawCircleV(card_center, radius, color);
+                        DrawCircleLines(xx card_center.x, xx card_center.y, radius, BLACK);
                 }
             }
         }
@@ -460,19 +450,11 @@ draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
         // the overlapping gutters will be darker than the borders but dgaf
 
-    }
-
-    // the jank begins
-    for cells {
-        for edge, e_index: it.edges {
-            if edge == .WALL then draw_wall(it.x, it.y, cast(Direction) e_index, opacity);
+        for edge, edge_index: it.edges {
+            if edge == .DOOR then draw_door(it.x, it.y, cast(Direction) edge_index, opacity);
         }
-    }
-
-    // the jank continues
-    for cells {
-        for edge, e_index: it.edges {
-            if edge == .DOOR then draw_door(it.x, it.y, cast(Direction) e_index, opacity);
+        for edge, edge_index: it.edges {
+            if edge == .WALL then draw_wall(it.x, it.y, cast(Direction) edge_index, opacity);
         }
     }
 }
@@ -500,20 +482,6 @@ draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
             if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index);
         }
     }
-}
-
-draw_door_representation :: (width: int, type: Card_Door_Type, position: Vector2, opacity: u8 = 255) {
-    size := xy(100, 30);
-    color := BLUE;
-    color.a = opacity;
-    DrawRectangleV(position, size, color);
-}
-draw_item_representation :: (type: Item_Type, position: Vector2, opacity: u8 = 255) {
-    radius := 40.0;
-    color := WHITE;
-    color.a = opacity;
-    DrawCircleV(position, radius, color);
-    DrawCircleLines(xx position.x, xx position.y, radius, BLACK);
 }
 
 // used to draw wall on the map
