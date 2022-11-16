@@ -1,7 +1,7 @@
 Item :: struct {
     using #as entity: Entity;
     type: Item_Type;
-    cells: [..] coord;
+    cells: [..] coord; // @Note: the cell coords will be relative until spawned
 
     coord :: struct {
         x: int;
@@ -11,7 +11,9 @@ Item :: struct {
 
 Item_Type :: enum {
     // Blocking items
-    TREE;
+    TREE_1x1;
+    TREE_2x2;
+    TREE_3x3;
 
     // Non-blocking items (but room rules still apply)
     TOILET;
@@ -28,7 +30,9 @@ init :: (using item: *Item) {
 
 render :: (using item: *Item) {
     if type == {
-        case .TREE;
+        case .TREE_1x1; #through;
+        case .TREE_2x2; #through;
+        case .TREE_3x3;
             for cells if is_in_vision(it.x, it.y) { // if any cell is in vision we need to draw it
                 color := Color.{ 0, 70, 10, 255 };
                 for cells if is_on_map(it.x, it.y) { color = DARKGREEN; break; }
@@ -53,18 +57,32 @@ render :: (using item: *Item) {
 
 is_blocking :: (type: Item_Type) -> bool {
     if type == {
-        case .TREE; return true;
-        case;
-            return false;
+        case .TREE_1x1; #through;
+        case .TREE_2x2; #through;
+        case .TREE_3x3; return true;
+
+        case; return false;
     }
 }
 // ???: should use enum_flags to allow multiple room types?
 get_room_requirement :: (type: Item_Type) -> Cell_Room_Type {
     if type == {
-        case .TREE;   return .EMPTY;
-        case .TOILET; return .BATHROOM;
-        case;         return .BLANK_ROOM;
+        case .TREE_1x1; #through;
+        case .TREE_2x2; #through;
+        case .TREE_3x3; return .EMPTY;
+        case .TOILET;   return .BATHROOM;
+        case;           return .BLANK_ROOM;
     }
 }
 
 TOILET_CELLS :: Item.coord.[.{0,0}];
+TREE_1x1_CELLS :: Item.coord.[.{0,0}];
+TREE_2x2_CELLS :: Item.coord.[
+    .{0,0}, .{1,0}, 
+    .{0,1}, .{1,1}
+];
+TREE_3x3_CELLS :: Item.coord.[
+    .{0,0}, .{1,0}, .{2,0}, 
+    .{0,1}, .{1,1}, .{2,1},
+    .{0,2}, .{1,2}, .{2,2},
+];

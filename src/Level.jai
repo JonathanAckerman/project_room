@@ -2,176 +2,171 @@ HORIZ_DOOR_SIZE :: Vector2.{CELL_WIDTH, 5};
 VERT_DOOR_SIZE :: Vector2.{5, CELL_WIDTH};
 
 Level :: struct {
-    width:  [] int;
-    height: [] int;
-    cards:  [] Card;
-    starting_cells: [] Cell;
-    starting_items: [] Item;
+    width:  [4] int;
+    height: [4] int;
+    cards:  [..] Card;
+    starting_cells: [..] Cell;
+    starting_items: [..] Item;
 }
 
 #run {
     for Level_Sequence assert(it.cards.count % 3 == 0, "Level %: # of cards % 3 must == 0", it_index+1);
 }
 
-Level_Sequence: [3] Level = .[
-    Levels.TUTORIAL_1,
-    Levels.TUTORIAL_2,
-    Levels.TUTORIAL_3,
+Level_Sequence: [1] Level = .[
+    LEVELS.TUTORIAL_1,
+    // Levels.TUTORIAL_2,
+    // Levels.TUTORIAL_3,
     // Levels.TUTORIAL_4,
 ];
 
+init :: (using level: *Level, index: int) {
+    if index == {
+        case 0;
+            array_copy(*level.cards,          LEVELS.TUTORIAL_1_CARDS);
+            array_copy(*level.starting_items, LEVELS.TUTORIAL_1_ITEMS);
+            array_copy(*level.starting_cells, LEVELS.TUTORIAL_1_CELLS);
+    }
+}
+
 // Archetypes -----------------------------------------------------------------------
-Levels: struct {
+LEVELS :: struct {
     TUTORIAL_1 :: Level.{
         width= .[5, 9, 15, GRID_WIDTH],
         height=.[5, 9, 15, GRID_HEIGHT],
-        cards=.[
-            Cards.R11,
-            Cards.R22,
-            Cards.M22,
-
-            Cards.I11,
-            Cards.R22,
-            Cards.M22,
-
-            Cards.D1,
-            Cards.D1,
-            Cards.TOILET,
-        ],
-        starting_cells=.[
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2},     .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-1},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
-            Cell.{.{GRID_WIDTH/2, GRID_HEIGHT/2-2},   .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
-            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
-
-            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
-            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-
-            Cell.{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
-        ],
-        starting_items=.[
-            Item.{type=.TREE, cells=.[
-                .{GRID_WIDTH/2+5, GRID_HEIGHT/2+5},
-            ]},
-            Item.{type=.TREE, cells=.[
-                .{GRID_WIDTH/2+7, GRID_HEIGHT/2+7},
-                .{GRID_WIDTH/2+8, GRID_HEIGHT/2+7},
-                .{GRID_WIDTH/2+7, GRID_HEIGHT/2+8},
-                .{GRID_WIDTH/2+8, GRID_HEIGHT/2+8},
-            ]},
-            Item.{type=.TREE, cells=.[
-                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+11},
-                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+11},
-                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+11},
-                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+12},
-                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+12},
-                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+12},
-                .{GRID_WIDTH/2+11, GRID_HEIGHT/2+13},
-                .{GRID_WIDTH/2+12, GRID_HEIGHT/2+13},
-                .{GRID_WIDTH/2+13, GRID_HEIGHT/2+13},
-            ]},
-        ],
     };
-    TUTORIAL_2 :: Level.{
-        width= .[7, 11, 15, GRID_WIDTH],
-        height=.[7, 11, 15, GRID_HEIGHT],
-        cards=.[
-            Cards.R11,
-            Cards.R22,
-            Cards.M22,
 
-            Cards.I11,
-            Cards.R22,
-            Cards.M22,
+    TUTORIAL_1_CARDS :: Card.[
+        Cards.R11,
+        Cards.R22,
+        Cards.M22,
 
-            Cards.R11,
-            Cards.R22,
-            Cards.M22,
+        Cards.I11,
+        Cards.R22,
+        Cards.M22,
 
-            Cards.I11,
-            Cards.R22,
-            Cards.M22,
+        Cards.D1,
+        Cards.D1,
+        Cards.TOILET,
+    ];
 
-            Cards.D1,
-            Cards.D1,
-            Cards.D1,
-        ],
-        starting_cells=.[
-            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+    TUTORIAL_1_CELLS :: Cell.[
+        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .EMPTY]},
+        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
 
-            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-        ],
-    };
-    TUTORIAL_3 :: Level.{
-        width= .[7, 11, 15, GRID_WIDTH],
-        height=.[7, 11, 15, GRID_HEIGHT],
-        cards=.[
-            Cards.R11,
-            Cards.R22,
-            Cards.M22,
+        .{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
+        .{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
+        .{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
 
-            Cards.I11,
-            Cards.R22,
-            Cards.M22,
+        .{.{GRID_WIDTH/2-3, GRID_HEIGHT/2-3}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+    ];
 
-            Cards.R11,
-            Cards.R22,
-            Cards.M22,
+    TUTORIAL_1_ITEMS :: Item.[
+        .{type=.TREE_1x1},
+        .{type=.TREE_2x2},
+        .{type=.TREE_3x3},
+    ];
+    // TUTORIAL_2 :: Level.{
+    //     width= .[7, 11, 15, GRID_WIDTH],
+    //     height=.[7, 11, 15, GRID_HEIGHT],
+    //     cards=.[
+    //         Cards.R11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.I11,
-            Cards.R22,
-            Cards.M22,
+    //         Cards.I11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.D1,
-            Cards.D1,
-            Cards.D1,
+    //         Cards.R11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.R11,
-            Cards.M22,
-            Cards.M22,
+    //         Cards.I11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.I11,
-            Cards.M22,
-            Cards.M22,
+    //         Cards.D1,
+    //         Cards.D1,
+    //         Cards.D1,
+    //     ],
+    //     starting_cells=.[
+    //         Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
 
-            Cards.R11,
-            Cards.M22,
-            Cards.M22,
+    //         Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+    //         Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+    //     ],
+    // };
+    // TUTORIAL_3 :: Level.{
+    //     width= .[7, 11, 15, GRID_WIDTH],
+    //     height=.[7, 11, 15, GRID_HEIGHT],
+    //     cards=.[
+    //         Cards.R11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.I11,
-            Cards.M22,
-            Cards.M22,
+    //         Cards.I11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cards.D1,
-            Cards.D1,
-            Cards.D1,
-        ],
-        starting_cells=.[
-            Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+    //         Cards.R11,
+    //         Cards.R22,
+    //         Cards.M22,
 
-            Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-            Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-            Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-        ],
-    };
+    //         Cards.I11,
+    //         Cards.R22,
+    //         Cards.M22,
+
+    //         Cards.D1,
+    //         Cards.D1,
+    //         Cards.D1,
+
+    //         Cards.R11,
+    //         Cards.M22,
+    //         Cards.M22,
+
+    //         Cards.I11,
+    //         Cards.M22,
+    //         Cards.M22,
+
+    //         Cards.R11,
+    //         Cards.M22,
+    //         Cards.M22,
+
+    //         Cards.I11,
+    //         Cards.M22,
+    //         Cards.M22,
+
+    //         Cards.D1,
+    //         Cards.D1,
+    //         Cards.D1,
+    //     ],
+    //     starting_cells=.[
+    //         Cell.{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
+
+    //         Cell.{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+    //         Cell.{.{GRID_WIDTH/2-2, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
+    //         Cell.{.{GRID_WIDTH/2-1, GRID_HEIGHT/2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
+    //     ],
+    // };
 }
 
 simulate_level :: () {
@@ -195,8 +190,8 @@ simulate_level :: () {
             if !gone {
                 if card.type == {
                     case .MIXED;
-                        if is_valid_placement(card.cells) {
-                            result := get_stamp_result(card.cells);
+                        if is_valid_placement(card.stamp.cells) {
+                            result := get_stamp_result(card.stamp.cells);
                             for result { 
                                 grid[it.y][it.x] = it; 
                                 for edge, e_index: it.edges if edge == .DOOR {
@@ -336,15 +331,15 @@ render_level :: () {
         if !gone {
             if card.type == {
                 case .MIXED;
-                    if is_valid_placement(card.cells) {
-                        projected_result := get_stamp_result(card.cells);
+                    if is_valid_placement(card.stamp.cells) {
+                        projected_result := get_stamp_result(card.stamp.cells);
                         if projected_result.count > 0 {
                             draw_cells(projected_result, 255);
                             intended_cursor = .POINTING_HAND;
                         }
                     }
                     else {
-                        draw_card_cells(card.cells, input.mouse_position - CELL_SIZE/2, 100);
+                        draw_card_cells(card.stamp.cells, input.mouse_position - CELL_SIZE/2, 100);
                         intended_cursor = .NOT_ALLOWED;
                     }
                 case .DOOR;
@@ -435,41 +430,22 @@ draw_level_sidebar :: () {
         DrawRectangleV(HAND_POS[2], xy(185, 250), ifx highlighted_card == 2 then WHITE else color2);
 
         // @@@: Factor this to not have to check twice
-        // draw room representation on card
-        card, gone := from_handle(hand[0]);
-        if !gone {
-            card_center := HAND_POS[0] + CARD_SIZE/2.0;
-            if card.type == {
-                case .MIXED;
-                    draw_card_cells_with_center(card.cells, card_center);
-                case .DOOR;
-                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
-                case .ITEM;
-                    draw_item_representation(card.item.type, card_center);
-            }
-        }
-        card, gone = from_handle(hand[1]);
-        if !gone {
-            card_center := HAND_POS[1] + CARD_SIZE/2.0;
-            if card.type == {
-                case .MIXED;
-                    draw_card_cells_with_center(card.cells, card_center);
-                case .DOOR;
-                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
-                case .ITEM;
-                    draw_item_representation(card.item.type, card_center);
-            }
-        }
-        card, gone = from_handle(hand[2]);
-        if !gone {
-            card_center := HAND_POS[2] + CARD_SIZE/2.0;
-            if card.type == {
-                case .MIXED;
-                    draw_card_cells_with_center(card.cells, card_center);
-                case .DOOR;
-                    draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
-                case .ITEM;
-                    draw_item_representation(card.item.type, card_center);
+        // draw room representation on hand cards
+        for hand {
+            card, gone := from_handle(it);
+            if !gone {
+                card_center := HAND_POS[it_index] + CARD_SIZE/2.0;
+                if card.type == {
+                    case .MIXED;
+                        stamp_width := cast(int) sqrt(cast(float) card.stamp.cells.count);
+                        pixel_width := CELL_WIDTH * stamp_width;
+                        stamp_base_pos := card_center - xy(pixel_width/2, pixel_width/2);
+                        draw_card_cells(card.stamp.cells, stamp_base_pos);
+                    case .DOOR;
+                        draw_door_representation(card.door.width, card.door.type, card_center - xy(50, 15));
+                    case .ITEM;
+                        draw_item_representation(card.item.type, card_center);
+                }
             }
         }
     }
@@ -514,35 +490,6 @@ draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
         color.a = opacity;
         
         pos := position + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
-        DrawRectangleV(pos, CELL_SIZE, color);
-        DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
-
-        for edge, edge_index: it.edges {
-            if edge == .DOOR then draw_door(pos - xy(1,1), cast(Direction) edge_index);
-        }
-        for edge, edge_index: it.edges {
-            if edge == .WALL then draw_wall(pos - xy(1,1), cast(Direction) edge_index);
-        }
-    }
-}
-draw_card_cells_with_center :: (cells: [] Card_Cell, center: Vector2, opacity: u8 = 255) {
-    stamp_width := cast(int) sqrt(cast(float) cells.count);
-    pixel_width := CELL_WIDTH * stamp_width;
-    stamp_base_pos := center - xy(pixel_width/2, pixel_width/2);
-
-    color: Color;
-    for cells {
-        if it.type == {
-            case .NORMAL;
-                color = YELLOW;
-            case .MERGE;
-                color = WHITE;
-            case .INTERIOR;
-                color = PINK;
-        }
-        color.a = opacity;
-
-        pos := stamp_base_pos + xy(xx it.cell.x, xx it.cell.y) * (CELL_WIDTH + 1);
         DrawRectangleV(pos, CELL_SIZE, color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
 
@@ -907,6 +854,7 @@ load_level :: (index: int) {
 
     level_has_focus = true;
     level = Level_Sequence[index];
+    init(*level, index);
     current_level_width  = level.width[0];
     current_level_height = level.height[0];
 
@@ -933,7 +881,7 @@ load_level :: (index: int) {
     for player_deck array_add(*shuffle, it);
     fisher_yates_shuffle(*shuffle);
     for shuffle {
-        if it.type == .ITEM then init(*it.item);
+        init(*it);
         array_add(*deck, spawn(it));
     }
 
