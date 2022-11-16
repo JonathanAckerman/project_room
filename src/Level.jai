@@ -420,9 +420,9 @@ draw_level_sidebar :: () {
 }
 
 draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
-    color := YELLOW;
-    color.a = opacity;
     for cells {
+        color := room_type_color(it.room, it.x, it.y);
+        color.a = opacity;
         pos := xy(xx it.x, xx it.y) * (CELL_WIDTH + 1) + xy(1, 1);
         DrawRectangleV(pos, CELL_SIZE, color);
         DrawRectangleLines(xx (pos.x-1), xx (pos.y-1), xx (CELL_WIDTH+2), xx (CELL_WIDTH+2), BLACK);
@@ -436,7 +436,7 @@ draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
         }
     }
 }
-draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) { // @Improve: these can be one function
+draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
     color: Color;
     for cells {
         if it.type == {
