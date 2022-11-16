@@ -863,6 +863,15 @@ load_level :: (index: int) {
     }
 }
 
-rotate_stamp :: (cells: [] Card_Cell, counter_clockwise: bool) {
+// @Assume: Stamps are square
+rotate_stamp :: (cells: [] Card_Cell, counter_clockwise: bool) -> [..] Card_Cell {
+    width := sqrt(cells.count);
+    result: [..] Card_Cell;
 
+    for cells {
+        // swap it.type
+        // swap it.cell
+    }
+
+    return result;
 }

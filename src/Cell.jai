@@ -46,6 +46,14 @@ opposite :: (dir_index: int) -> int {
     i := dir_index + 2;
     return i % 4;
 }
+clockwise :: (dir: Direction) -> Direction {
+    i := (cast(int) dir) + 1;
+    return cast(Direction)(i % 4);
+}
+counter_clockwise :: (dir: Direction) -> Direction {
+    i := (cast(int) dir) + 3;
+    return cast(Direction)(i % 4);
+}
 
 room_type_color :: (type: Cell_Room_Type, x: int, y: int) -> Color {
     color: Color;

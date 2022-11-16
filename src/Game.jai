@@ -38,6 +38,7 @@ game: struct {
         return count;
     }
     highlighted_card := -1;
+    highlighted_card_direction: Direction;
     is_first_placement := true;
 
     grid: [GRID_HEIGHT][GRID_WIDTH] Cell;
