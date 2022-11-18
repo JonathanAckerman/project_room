@@ -193,10 +193,17 @@ simulate_level :: () {
             if !gone {
                 if card.type == {
                     case .MIXED;
-                        if is_valid_placement(card.stamp.cells) {
-                            result := get_stamp_result(card.stamp.cells);
+                        rotated: [..] Card_Cell;
+                        array_copy(*rotated, card.stamp.cells);
+                        num_quarter_rotations := cast(int) highlighted_card_direction - 1;
+                        for 0..num_quarter_rotations {
+                            rotate_stamp(*rotated);
+                        }
+
+                        if is_valid_placement(rotated) {
+                            result := get_stamp_result(rotated);
                             for result { 
-                                grid[it.y][it.x] = it; 
+                                grid[it.y][it.x] = it;
                                 for edge, e_index: it.edges if edge == .DOOR {
                                     in_bounds, neighbor := get_neighbor(it.x, it.y, cast(Direction) e_index);
                                     if in_bounds {
@@ -238,11 +245,13 @@ simulate_level :: () {
         // hand clicked
         for hand if is_mouse_over(HAND_POS[it_index], CARD_SIZE) && exists(it) {
             reset_highlight = highlighted_card == it_index;
+            highlighted_card_direction = .NORTH;
             highlighted_card = it_index;
         }
         
         if reset_highlight {
             highlighted_card = -1;
+            highlighted_card_direction = .NORTH;
             intended_cursor = .CROSSHAIR;
         }
     }
@@ -309,15 +318,22 @@ render_level :: () {
         if !gone {
             if card.type == {
                 case .MIXED;
-                    if is_valid_placement(card.stamp.cells) {
-                        projected_result := get_stamp_result(card.stamp.cells);
+                    rotated: [..] Card_Cell;
+                    array_copy(*rotated, card.stamp.cells);
+                    num_quarter_rotations := cast(int) highlighted_card_direction - 1;
+                    for 0..num_quarter_rotations {
+                        rotate_stamp(*rotated);
+                    }
+
+                    if is_valid_placement(rotated) {
+                        projected_result := get_stamp_result(rotated);
                         if projected_result.count > 0 {
                             draw_cells(projected_result, 255);
                             intended_cursor = .POINTING_HAND;
                         }
                     }
                     else {
-                        draw_card_cells(card.stamp.cells, input.mouse_position - CELL_SIZE/2, 100);
+                        draw_card_cells(rotated, input.mouse_position - CELL_SIZE/2, 100);
                         intended_cursor = .NOT_ALLOWED;
                     }
                 case .DOOR;
@@ -419,9 +435,10 @@ draw_level_sidebar :: () {
     }
 }
 
+// draws Cells ie: valid ghosts
 draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
     for cells {
-        color := room_type_color(it.room, it.x, it.y);
+        color := room_type_color(it.room);
         color.a = opacity;
         pos := xy(xx it.x, xx it.y) * (CELL_WIDTH + 1) + xy(1, 1);
         DrawRectangleV(pos, CELL_SIZE, color);
@@ -436,6 +453,8 @@ draw_cells :: (cells: [] Cell, opacity: u8 = 255) {
         }
     }
 }
+
+// draws Card_Cells ie: card representations and invalid ghosts (these include the cell type)
 draw_card_cells :: (cells: [] Card_Cell, position: Vector2, opacity: u8 = 255) {
     for cells {
         color := room_type_color(it.room);
@@ -631,12 +650,12 @@ draw_item :: (position: Vector2, opacity: u8 = 255) {
     DrawCircleLines(xx position.x, xx position.y, CELL_WIDTH/2 - 3.0, BLACK);
 }
 
-get_stamp_result :: (stamp: [] Card_Cell) -> [] Cell {
+get_stamp_result :: (stamp: [] Card_Cell) -> [..] Cell {
     using game;
     result: [..] Cell;
 
     mouse_x, mouse_y := get_cell_index(input.mouse_position); // maybe remove this dependency
-    if mouse_x == -1 || mouse_y == -1 return .[];
+    if mouse_x == -1 || mouse_y == -1 return result;
 
     for stamp_cell, stamp_index: stamp {
         cell_x := mouse_x + stamp_cell.x;
@@ -785,6 +804,7 @@ check_level_success :: (force_success: bool = false) {
         game.state = .LEVEL_COMPLETION;
         game.level_has_focus = false;
         game.highlighted_card = -1;
+        game.highlighted_card_direction = .NORTH;
 
         if force_success || win {
             game.win = true;
@@ -833,6 +853,7 @@ load_level :: (index: int) {
     phase = .ROOM_PLACEMENT;
     intended_cursor = .CROSSHAIR;
     highlighted_card = -1;
+    highlighted_card_direction = .NORTH;
     is_first_placement = true;
 
     shuffle: [..] Card;
@@ -861,17 +882,4 @@ load_level :: (index: int) {
     for level.starting_items {
         spawn(it);
     }
-}
-
-// @Assume: Stamps are square
-rotate_stamp :: (cells: [] Card_Cell, counter_clockwise: bool) -> [..] Card_Cell {
-    width := sqrt(cells.count);
-    result: [..] Card_Cell;
-
-    for cells {
-        // swap it.type
-        // swap it.cell
-    }
-
-    return result;
 }

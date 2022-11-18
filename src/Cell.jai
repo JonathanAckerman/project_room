@@ -95,3 +95,62 @@ room_type_color :: (type: Cell_Room_Type) -> Color {
     }
     return color;
 }
+
+rotate_stamp :: (cells: *[] Card_Cell) {
+    N := cast(int) sqrt(cast(float) cells.count);
+    
+    cycle_width := N;
+    row_number := 0;
+    while cycle_width > 0 { // row loop
+        index := N * row_number + row_number;
+        for i: 0..cycle_width-2 { // col loop
+            source := (<<cells)[index];
+            source_index := index;
+            for 0..3 { // cycle loop
+                // find dest
+                dest_x, dest_y := (N-1) - (source_index / N), source_index % N;
+                dest := *(<<cells)[dest_y * N + dest_x];
+
+                // replaced = dest (copy out dest)
+                replaced := (<<cells)[dest_y * N + dest_x];
+                replaced_index := dest_y * N + dest_x;
+
+                // dest = source, except their coords
+                coord := dest.coord;
+                <<dest = source;
+                dest.coord = coord;
+
+                // rotate dest walls
+                edge_source := dest.edges[0];
+                for 0..3 {
+                    edge_dest := (it + 1) % 4;
+                    edge_replaced := dest.edges[edge_dest];
+                    dest.edges[edge_dest] = edge_source;
+                    edge_source = edge_replaced;
+                }
+
+                // source = replaced
+                source = replaced;
+                source_index = replaced_index;
+            }
+            index += 1;
+        }
+
+        // rotate the center cell
+        if cycle_width == 1 {
+            index = N * row_number + row_number;
+            center_cell := *(<<cells)[index].cell;
+            edge_source := center_cell.edges[0];
+            for 0..3 {
+                edge_dest := (it + 1) % 4;
+                edge_replaced := center_cell.edges[edge_dest];
+                center_cell.edges[edge_dest] = edge_source;
+                edge_source = edge_replaced;
+            }
+            return;
+        }
+
+        row_number += 1;
+        cycle_width -= 2;
+    }
+}
