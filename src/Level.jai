@@ -308,8 +308,6 @@ render_level :: () {
 
     if state == .LEVEL then draw_level_sidebar();
 
-    for _Item render(it);
-
     //
     // draw ghosts
     //
@@ -366,6 +364,8 @@ render_level :: () {
             }
         }
     }
+
+    for _Item render(it);
 
     if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 }
