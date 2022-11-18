@@ -12,6 +12,20 @@ HAND_POS :: Vector2.[.{1310, 700}, .{1505, 700}, .{1700, 700}];
 
 SIDEBAR_LEFT :: 1 + (CELL_WIDTH + 1) * GRID_WIDTH;
 
+NEW_GAME_CARDS :: Card.[
+    Cards.R11,
+    Cards.R22,
+    Cards.M22,
+
+    Cards.I11,
+    Cards.R22,
+    Cards.M22,
+
+    Cards.D1,
+    Cards.D1,
+    Cards.TOILET,
+];
+
 game: struct {
     resetting: bool;
     win: bool;
@@ -100,6 +114,8 @@ game_reset :: () {
 
     game = .{};
     frame = .{};
+
+    array_copy(*player_deck, NEW_GAME_CARDS);
 }
 
 get_cell_index :: (point: Vector2) -> int, int {
