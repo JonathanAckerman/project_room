@@ -90,7 +90,7 @@ simulate_level :: () {
                             despawn(card);
                             update_vision();
                             recompute_kobold_position();
-                            // advance_adventurers();
+                            advance_adventurers();
                         }
                         else reset_highlight = false;
                     case .DOOR;
@@ -104,6 +104,7 @@ simulate_level :: () {
                                 neighbor.edges[opposite_direction] = .EMPTY;
                             }
                             despawn(card);
+                            advance_adventurers();
                         }
                         else reset_highlight = false;
                     case .ITEM;
@@ -116,6 +117,7 @@ simulate_level :: () {
                             }
                             spawn(card.item);
                             despawn(card);
+                            advance_adventurers();
                         }
                 }
             }
@@ -542,6 +544,7 @@ get_stamp_result :: (stamp: [] Card_Cell) -> [..] Cell {
     for stamp_cell, stamp_index: stamp {
         cell_x := mouse_x + stamp_cell.x;
         cell_y := mouse_y + stamp_cell.y;
+        if !is_on_grid(cell_x, cell_y) return result;
 
         result_cell := grid[cell_y][cell_x];
 
@@ -676,20 +679,20 @@ fully_connected :: () -> bool {
 }
 
 check_level_success :: (force_success: bool = false) {
-    // level_end := game.deck.count == 0 && game.count_hand() == 0;
-    // win := false;
-    // if level_end then win = fully_connected();
+    level_end := game.deck.count == 0 && game.count_hand() == 0;
+    win := false;
+    if level_end then win = (game.adventurers.x != game.kobold.x || game.adventurers.y != game.kobold.y);
 
-    // if force_success || level_end {
-    //     game.state = .LEVEL_COMPLETION;
-    //     game.level_has_focus = false;
-    //     game.highlighted_card = -1;
-    //     game.highlighted_card_direction = .NORTH;
+    if force_success || level_end {
+        game.state = .LEVEL_COMPLETION;
+        game.level_has_focus = false;
+        game.highlighted_card = -1;
+        game.highlighted_card_direction = .NORTH;
 
-    //     if force_success || win {
-    //         game.win = true;
-    //     }
-    // }
+        if force_success || win {
+            game.win = true;
+        }
+    }
 }
 
 load_level :: (index: int) {

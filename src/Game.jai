@@ -138,19 +138,22 @@ get_cell :: (x: int, y: int) -> *Cell {
 }
 
 get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
-    n_x := x;
-    n_y := y;
+    neighbor_x := x;
+    neighbor_y := y;
     if #complete direction == {
         case .NORTH;
-            n_y -= 1;
+            neighbor_y -= 1;
         case .EAST;
-            n_x += 1;
+            neighbor_x += 1;
         case .SOUTH;
-            n_y += 1;
+            neighbor_y += 1;
         case .WEST;
-            n_x -= 1;
+            neighbor_x -= 1;
     }
-    result := get_cell(n_x, n_y);
+
+    if !is_on_grid(neighbor_x, neighbor_y) return false, null;
+
+    result := get_cell(neighbor_x, neighbor_y);
     return is_on_grid(result.x, result.y), result;
 }
 
@@ -377,4 +380,11 @@ recompute_kobold_position :: () {
     }
 
     kobold.x, kobold.y = max_x, max_y;
+}
+
+advance_adventurers :: () {
+    using game;
+    // dijkstra but add cost for walls and/or EMPTY rooms
+    // ie: allow digging / busting down walls
+    adventurers.y -= 1;
 }
