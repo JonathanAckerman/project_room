@@ -88,6 +88,9 @@ simulate_level :: () {
                                 }
                             }
                             despawn(card);
+                            update_vision();
+                            recompute_kobold_position();
+                            // advance_adventurers();
                         }
                         else reset_highlight = false;
                     case .DOOR;
@@ -673,20 +676,20 @@ fully_connected :: () -> bool {
 }
 
 check_level_success :: (force_success: bool = false) {
-    level_end := game.deck.count == 0 && game.count_hand() == 0;
-    win := false;
-    if level_end then win = fully_connected();
+    // level_end := game.deck.count == 0 && game.count_hand() == 0;
+    // win := false;
+    // if level_end then win = fully_connected();
 
-    if force_success || level_end {
-        game.state = .LEVEL_COMPLETION;
-        game.level_has_focus = false;
-        game.highlighted_card = -1;
-        game.highlighted_card_direction = .NORTH;
+    // if force_success || level_end {
+    //     game.state = .LEVEL_COMPLETION;
+    //     game.level_has_focus = false;
+    //     game.highlighted_card = -1;
+    //     game.highlighted_card_direction = .NORTH;
 
-        if force_success || win {
-            game.win = true;
-        }
-    }
+    //     if force_success || win {
+    //         game.win = true;
+    //     }
+    // }
 }
 
 load_level :: (index: int) {
@@ -738,12 +741,12 @@ load_level :: (index: int) {
 
     for level.starting_cells {
         grid[it.y][it.x] = it;
-        update_vision();
     }
 
     for level.starting_items {
         spawn(it);
     }
 
+    update_vision();
     recompute_kobold_position();
 }

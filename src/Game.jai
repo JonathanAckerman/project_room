@@ -161,6 +161,7 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
     for cells {
         cell_x := mouse_x + it.cell.x;
         cell_y := mouse_y + it.cell.y;
+        if !is_on_grid(cell_x, cell_y) return false;
 
         // collides with an item that is blocking
         for context.entity_storage._Item {
@@ -208,6 +209,7 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
 
 is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, type: Card_Door_Type) -> bool {
     using game;
+    if !is_on_grid(x, y) return false;
 
     cell := grid[y][x];
     dir := direction_to_offset(direction);
@@ -239,6 +241,7 @@ is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, ty
 
 is_valid_item_placement :: (x: int, y: int, direction: Direction, item: Item) -> bool {
     using game;
+    if !is_on_grid(x, y) return false;
 
     cell := grid[y][x];
 
