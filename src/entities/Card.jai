@@ -62,28 +62,28 @@ Cards: struct {
     // Mixed ----------------------------------------------------------------------
     R11 :: Card.{type=.MIXED, stamp.type=.R11};
     R11_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.DOOR, .WALL, .WALL, .WALL]}}
+        .{cell=.{coords=.{0, 0}, room=.BLANK_ROOM, edges=.[.DOOR, .WALL, .WALL, .WALL]}}
     ];
 
     R22 :: Card.{type=.MIXED, stamp.type=.R22};
     R22_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, type=.MERGE},
-        .{cell=.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}},
-        .{cell=.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}},
-        .{cell=.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}},
+        .{cell=.{coords=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, type=.MERGE},
+        .{cell=.{coords=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}},
+        .{cell=.{coords=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}},
+        .{cell=.{coords=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}},
     ];
 
     I11 :: Card.{type=.MIXED, stamp.type=.I11};
     I11_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.DOOR, .WALL, .WALL, .WALL]}, type=.INTERIOR},
+        .{cell=.{coords=.{0, 0}, room=.BLANK_ROOM, edges=.[.DOOR, .WALL, .WALL, .WALL]}, type=.INTERIOR},
     ];
 
     M22 :: Card.{type=.MIXED, stamp.type=.M22};
     M22_CELLS :: Card_Cell.[
-        .{cell=.{coord=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, type=.MERGE},
-        .{cell=.{coord=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}, type=.MERGE},
-        .{cell=.{coord=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}, type=.MERGE},
-        .{cell=.{coord=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}, type=.MERGE},
+        .{cell=.{coords=.{0, 0}, room=.BLANK_ROOM, edges=.[.WALL, .EMPTY, .EMPTY, .WALL]}, type=.MERGE},
+        .{cell=.{coords=.{1, 0}, room=.BLANK_ROOM, edges=.[.WALL, .WALL, .EMPTY, .EMPTY]}, type=.MERGE},
+        .{cell=.{coords=.{0, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .EMPTY, .WALL, .WALL]}, type=.MERGE},
+        .{cell=.{coords=.{1, 1}, room=.BLANK_ROOM, edges=.[.EMPTY, .WALL, .WALL, .EMPTY]}, type=.MERGE},
     ];
 
     // Doors ----------------------------------------------------------------------

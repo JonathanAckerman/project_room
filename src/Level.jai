@@ -6,6 +6,8 @@ Level :: struct {
     height: [4] int;
     starting_cells: [..] Cell;
     starting_items: [..] Item;
+    kobold_start:     Cell.coord;
+    adventurers_start: Cell.coord;
 }
 
 Level_Sequence: [1] Level = .[
@@ -17,6 +19,8 @@ init :: (using level: *Level, index: int) {
         case 0;
             array_copy(*level.starting_items, LEVELS.TUTORIAL_1_ITEMS);
             array_copy(*level.starting_cells, LEVELS.TUTORIAL_1_CELLS);
+            adventurers_start = .{GRID_WIDTH/2, GRID_HEIGHT-1};
+            kobold_start = .{GRID_WIDTH/2, GRID_HEIGHT-2};
     }
 }
 
@@ -28,52 +32,39 @@ LEVELS :: struct {
     };
 
     TUTORIAL_1_CELLS :: Cell.[
-        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .EMPTY, .EMPTY, .WALL]},
-        .{.{GRID_WIDTH/2,   GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
-        .{.{GRID_WIDTH/2+1, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .EMPTY]},
-        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .EMPTY]},
-        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2},   .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
-        .{.{GRID_WIDTH/2+2, GRID_HEIGHT/2-2}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
-
-        .{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.EMPTY, .EMPTY, .WALL, .EMPTY]},
-        .{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2},   .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
-        .{.{GRID_WIDTH/2-3,   GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .WALL, .WALL]},
-        .{.{GRID_WIDTH/2-3+1, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .EMPTY, .EMPTY, .EMPTY]},
-        .{.{GRID_WIDTH/2-3+2, GRID_HEIGHT/2+2-2}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .EMPTY]},
-
-        // test in vision
-        .{.{GRID_WIDTH/2-4, GRID_HEIGHT/2-4}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
-        // test out of vision
-        .{.{GRID_WIDTH/2-6, GRID_HEIGHT/2-6}, .BLANK_ROOM, .[.WALL, .WALL, .WALL, .WALL]},
+        // adventurer start
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-1}, .BLANK_ROOM, .[.EMPTY, .WALL, .WALL, .WALL]},
+        // starting hallway
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-2}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-3}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-4}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-5}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-6}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-7}, .BLANK_ROOM, .[.EMPTY, .WALL, .EMPTY, .WALL]},
+        // kobold start
+        .{.{GRID_WIDTH/2, GRID_HEIGHT-8}, .BLANK_ROOM, .[.WALL, .WALL, .EMPTY, .WALL]},
     ];
 
     TUTORIAL_1_ITEMS :: Item.[
-        .{type=.TREE_1x1},
-        .{type=.TREE_2x2},
-        .{type=.TREE_3x3},
+        // .{type=.TREE_1x1},
+        // .{type=.TREE_2x2},
+        // .{type=.TREE_3x3},
     ];
 }
 
 simulate_level :: () {
     using game;
 
-    if level.starting_cells.count > 0 then is_first_placement = false;
-
     // deal cards
     hand_count := count_hand();
     if hand_count == 0 && deck.count > 0 {
-        for i: 0..2 {
-            hand[i] = pop(*deck);
-        }
+        for 0..2 hand[it] = pop(*deck);
     }
 
     if input.clicked {
         reset_highlight := true;
         // map clicked
-        if is_mouse_over(game.map_top_left, map_size) && highlighted_card > -1 {
+        if is_mouse_over(.{0, 0}, GRID_SIZE) && highlighted_card > -1 {
             card, gone := from_handle(hand[highlighted_card]);
             if !gone {
                 if card.type == {
@@ -251,6 +242,11 @@ render_level :: () {
     }
 
     for _Item render(it);
+
+    // draw kobold
+    DrawCircleV(get_cell_position(kobold.x, kobold.y) + CELL_SIZE/2 + xy(1,1), CELL_WIDTH/3, RED);
+    // draw adventurers
+    DrawCircleV(get_cell_position(adventurers.x, adventurers.y) + CELL_SIZE/2 + xy(1,1), CELL_WIDTH/3, BLUE);
 
     if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 }
@@ -626,14 +622,13 @@ get_nearest_edge :: (x: int, y: int) -> Direction {
 fully_connected :: () -> bool {
     using game;
     checked: [GRID_HEIGHT][GRID_WIDTH] bool;
-    coord :: struct {x: int; y: int;};
-    unsearched: [..] coord;
+    unsearched: [..] Cell.coord;
 
     // find the first non-empty cell
     for row: grid {
         for cell: row {
             if cell.room != .EMPTY {
-                c: coord;
+                c: Cell.coord;
                 c.x = cell.x;
                 c.y = cell.y;
                 array_add(*unsearched, c);
@@ -661,9 +656,8 @@ fully_connected :: () -> bool {
                 || grid[neighbor_y][neighbor_x].room == .EMPTY
                     then continue;
 
-                n: coord;
-                n.x = neighbor_x;
-                n.y = neighbor_y;
+                n: Cell.coord;
+                n.x, n.y = neighbor_x, neighbor_y;
                 if it == .EMPTY || it == .DOOR then array_add(*unsearched, n);
             }
         }
@@ -693,12 +687,6 @@ check_level_success :: (force_success: bool = false) {
             game.win = true;
         }
     }
-
-    // only grow in the final turns (should be evenly spaced?)
-    if game.count_hand() == 0 {
-        phase := game.level.width.count - (game.deck.count / (game.level.width.count - 1));
-        if game.map_phase < phase then grow_map();
-    }
 }
 
 load_level :: (index: int) {
@@ -717,15 +705,10 @@ load_level :: (index: int) {
     level_has_focus = true;
     level = Level_Sequence[index];
     init(*level, index);
-    current_level_width  = level.width[0];
-    current_level_height = level.height[0];
-
     print("LOADING LEVEL %\n", index+1);
 
-    map_phase = 0;
-    map_size.x = 1 + level.width[0] * CELL_WIDTH + level.width[0];
-    map_size.y = 1 + level.height[0] * CELL_WIDTH + level.height[0];
-    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
+    kobold = level.kobold_start;
+    adventurers = level.adventurers_start;
 
     for context.entity_storage._Card {
         despawn(it);
@@ -733,11 +716,9 @@ load_level :: (index: int) {
     for context.entity_storage._Item {
         despawn(it);
     }
-    phase = .ROOM_PLACEMENT;
     intended_cursor = .CROSSHAIR;
     highlighted_card = -1;
     highlighted_card_direction = .NORTH;
-    is_first_placement = true;
 
     fisher_yates_shuffle(*player_deck);
     for player_deck {
@@ -757,9 +738,12 @@ load_level :: (index: int) {
 
     for level.starting_cells {
         grid[it.y][it.x] = it;
+        update_vision();
     }
 
     for level.starting_items {
         spawn(it);
     }
+
+    recompute_kobold_position();
 }

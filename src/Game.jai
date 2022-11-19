@@ -1,8 +1,9 @@
-CELL_WIDTH  :: 29.0;
-CELL_SIZE   :: Vector2.{CELL_WIDTH, CELL_WIDTH};
-GRID_WIDTH  :: 41;
-GRID_HEIGHT :: 35;
-GRID_SIZE   :: Vector2.{1 + GRID_WIDTH * (CELL_WIDTH+1), 1 + GRID_HEIGHT * (CELL_WIDTH+1)};
+CELL_WIDTH    :: 29.0;
+CELL_SIZE     :: Vector2.{CELL_WIDTH, CELL_WIDTH};
+GRID_WIDTH    :: 41;
+GRID_HEIGHT   :: 35;
+GRID_SIZE     :: Vector2.{1 + GRID_WIDTH * (CELL_WIDTH+1), 1 + GRID_HEIGHT * (CELL_WIDTH+1)};
+VISION_RADIUS :: 1;
 
 CARD_WIDTH :: 185;
 CARD_HEIGHT :: 250;
@@ -31,7 +32,6 @@ game: struct {
     win: bool;
     debug: bool = false;
     state: Game_State;
-    phase: Game_Phase;
     
     intended_cursor: MouseCursor = .CROSSHAIR;
     mouse_cursor: MouseCursor;
@@ -39,8 +39,6 @@ game: struct {
     level: Level;
     level_index: int;
     level_has_focus: bool;
-    current_level_width:  int;
-    current_level_height: int;
 
     deck: [..] Handle(Card);
     player_deck: [..] Card;
@@ -53,23 +51,19 @@ game: struct {
     }
     highlighted_card := -1;
     highlighted_card_direction: Direction;
-    is_first_placement := true;
 
     grid: [GRID_HEIGHT][GRID_WIDTH] Cell;
-    map_top_left: Vector2;
-    map_size: Vector2;
-    map_phase: int;
+
+    cells_in_vision: [..] Cell.coord;
+
+    adventurers: Cell.coord;
+    kobold: Cell.coord;
 }
 
 Game_State :: enum {
     LEVEL_SELECT;
     LEVEL;
     LEVEL_COMPLETION;
-}
-
-Game_Phase :: enum {
-    ROOM_PLACEMENT;
-    DOOR_PLACEMENT;
 }
 
 frame: struct {
@@ -133,9 +127,14 @@ get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
     return xy(x, y);
 }
 
-get_cell :: (x: int, y: int) -> bool, *Cell {
-    if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, null;
-    return true, *game.grid[y][x];
+// rethink this, dont need bool
+// get_cell :: (x: int, y: int) -> bool, *Cell {
+//     if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, null;
+//     return true, *game.grid[y][x];
+// }
+get_cell :: (x: int, y: int) -> *Cell {
+    assert(is_on_grid(x, y), "cell not on grid");
+    return *game.grid[y][x];
 }
 
 get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
@@ -151,8 +150,8 @@ get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
         case .WEST;
             n_x -= 1;
     }
-    in_bounds, result := get_cell(n_x, n_y);
-    return in_bounds, result;
+    result := get_cell(n_x, n_y);
+    return is_on_grid(result.x, result.y), result;
 }
 
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
@@ -162,8 +161,6 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
     for cells {
         cell_x := mouse_x + it.cell.x;
         cell_y := mouse_y + it.cell.y;
-        // cell is off map
-        if !is_on_map(cell_x, cell_y) return false;
 
         // collides with an item that is blocking
         for context.entity_storage._Item {
@@ -195,7 +192,7 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
 
                     neighbor := game.grid[neighbor_y][neighbor_x];
 
-                    if is_on_map(neighbor.x, neighbor.y) && neighbor.room != .EMPTY 
+                    if neighbor.room != .EMPTY 
                         then has_adjacency = true;
                 }
             case .INTERIOR;
@@ -211,13 +208,11 @@ is_valid_placement :: (cells: [] Card_Cell) -> bool {
 
 is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, type: Card_Door_Type) -> bool {
     using game;
-    // door is outside of map
-    if !is_on_map(x, y) return false;
 
     cell := grid[y][x];
     dir := direction_to_offset(direction);
 
-    // map boundary
+    // grid boundary
     if y == 0 && direction == .NORTH
     || x == GRID_WIDTH - 1 && direction == .EAST
     || y == GRID_WIDTH - 1 && direction == .SOUTH
@@ -244,8 +239,6 @@ is_valid_door_placement :: (x: int, y: int, direction: Direction, width: int, ty
 
 is_valid_item_placement :: (x: int, y: int, direction: Direction, item: Item) -> bool {
     using game;
-    // item is outside of map
-    if !is_on_map(x, y) return false;
 
     cell := grid[y][x];
 
@@ -262,51 +255,123 @@ is_valid_item_placement :: (x: int, y: int, direction: Direction, item: Item) ->
     return true;
 }
 
-grow_map :: () {
-    using game;
-    if current_level_width == GRID_WIDTH && current_level_height == GRID_HEIGHT return;
-
-    old_level_width  := current_level_width;
-    old_level_height := current_level_height;
-    map_phase += 1;
-    current_level_width  = level.width[map_phase];
-    current_level_height = level.height[map_phase];
-
-    // recompute map size/position
-    map_size.x = 1 + current_level_width * CELL_WIDTH + current_level_width;
-    map_size.y = 1 + current_level_height * CELL_WIDTH + current_level_height;
-    map_top_left = xy(1,1) + GRID_SIZE/2 - xy(map_size.x, map_size.y)/2.0;
-}
-
-is_on_map :: (x: int, y: int) -> bool {
-    using game;
-    map_left := (GRID_WIDTH-1)/2 - (current_level_width-1)/2;
-    map_top  := (GRID_HEIGHT-1)/2 - (current_level_height-1)/2;
-
-    if x >= map_left && x < map_left + current_level_width
-    && y >= map_top && y < map_top + current_level_height
-        return true;
-    else return false;
+is_on_grid :: (x: int, y: int) -> bool {
+    if x < 0 || x > GRID_WIDTH-1
+    || y < 0 || y > GRID_HEIGHT-1
+        return false;
+    return true;
 }
 
 is_in_vision :: (x: int, y: int, exclude_map: bool = false) -> bool {
+    for game.cells_in_vision {
+        if it.x == x && it.y == y return true;
+    }
+    return false;
+}
+
+update_vision :: () {
     using game;
-    vision_width  := ifx map_phase == level.width.count-1  then GRID_WIDTH  else level.width[map_phase+1];
-    vision_height := ifx map_phase == level.height.count-1 then GRID_HEIGHT else level.height[map_phase+1];
-    vision_left := (GRID_WIDTH-1)/2 - (vision_width-1)/2;
-    vision_top  := (GRID_HEIGHT-1)/2 - (vision_height-1)/2;
-
-    map_left := ifx exclude_map then (GRID_WIDTH-1)/2 - (current_level_width-1)/2 else 0;
-    map_top  := ifx exclude_map then (GRID_HEIGHT-1)/2 - (current_level_height-1)/2 else 0;
-
-    if x >= vision_left && x < vision_left + vision_width 
-    && y >= vision_top && y < vision_top + vision_height
-        if exclude_map {
-            if x >= map_left && x < map_left + current_level_width
-            && y >= map_top && y < map_top + current_level_height
-                return false; // in vision, but on map
-            else return true; // in vision, and not on map
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            if grid[y][x].room != .EMPTY {
+                for j: -VISION_RADIUS..VISION_RADIUS {
+                    for i: -VISION_RADIUS..VISION_RADIUS {
+                        neighbor: Cell.coord;
+                        neighbor.x, neighbor.y = x + i, y + j;
+                        if is_on_grid(neighbor.x, neighbor.y) {
+                            array_add(*cells_in_vision, neighbor);
+                        }
+                    }
+                }
+            }
         }
-        else return true; // in vision
-    else return false; // out of vision
+    }
+}
+
+recompute_kobold_position :: () {
+    using game;
+
+    index :: (x, y) => y * GRID_WIDTH + x;
+    // Dijkstra
+    Dist_With_Check :: struct { dist: int; unchecked: bool; }
+    dist: [GRID_HEIGHT][GRID_WIDTH] Dist_With_Check;
+    prev: [GRID_HEIGHT][GRID_WIDTH] *Cell;
+    unsearched: [..] *Cell;
+
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            dist[y][x] = .{S64_MAX, true};
+            array_add(*unsearched, *grid[y][x]);
+        }
+    }
+    dist[adventurers.y][adventurers.x].dist = 0;
+
+    while unsearched.count > 0 {
+        min_x := -1;
+        min_y := -1;
+        min_dist := S64_MAX;
+        for y: 0..GRID_HEIGHT-1 {
+            for x: 0..GRID_WIDTH-1 {
+                if dist[y][x].unchecked && dist[y][x].dist < min_dist {
+                    min_dist = dist[y][x].dist;
+                    min_x = x;
+                    min_y = y;
+                }
+            }
+        }
+        if min_x == -1 || min_y == -1 || min_dist == S64_MAX {
+            // print("no nearest cell: %, %, %\n", min_x, min_y, min_dist);
+            break;
+        }
+
+        searching: *Cell;
+        for unsearched {
+            if it.x == min_x && it.y == min_y {
+                searching = it;
+                array_unordered_remove_by_index(*unsearched, it_index);
+                dist[searching.y][searching.x].unchecked = false;
+                break;
+            }
+        }
+
+        for searching.edges {
+            if it == .EMPTY || it == .DOOR {
+                dir := direction_to_offset(cast(Direction) it_index);
+                neighbor_x := searching.x + (cast(int) dir.x);
+                neighbor_y := searching.y + (cast(int) dir.y);
+                if is_on_grid(neighbor_x, neighbor_y) {
+                    neighbor_on_grid := get_cell(neighbor_x, neighbor_y);
+                    if neighbor_on_grid.room != .EMPTY {
+                        // find the neighbor in unsearched
+                        neighbor: *Cell;
+                        for unsearched if it.x == neighbor_x && it.y == neighbor_y then neighbor = it;
+                        if neighbor == null continue;
+
+                        alt := dist[searching.y][searching.x].dist + 1;
+                        if alt < dist[neighbor_y][neighbor_x].dist {
+                            dist[neighbor_y][neighbor_x].dist = alt;
+                            prev[neighbor_y][neighbor_x] = searching;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    max_dist := 0;
+    max_x := -1;
+    max_y := -1;
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            if prev[y][x] != null {
+                if dist[y][x].dist > max_dist {
+                    max_dist = dist[y][x].dist;
+                    max_x = x;
+                    max_y = y;
+                }
+            }
+        }
+    }
+
+    kobold.x, kobold.y = max_x, max_y;
 }

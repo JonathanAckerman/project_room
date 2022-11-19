@@ -35,9 +35,9 @@ render :: (using item: *Item) {
         case .TREE_3x3;
             for cells if is_in_vision(it.x, it.y) { // if any cell is in vision we need to draw it
                 color := Color.{ 0, 70, 10, 255 };
-                for cells if is_on_map(it.x, it.y) { color = DARKGREEN; break; }
+                // for cells if is_on_map(it.x, it.y) { color = DARKGREEN; break; }
 
-                on_grid, base_cell := get_cell(cells[0].x, cells[0].y);
+                base_cell := get_cell(cells[0].x, cells[0].y);
                 width := sqrt(cast(float) cells.count);
                 base_pos := get_cell_position(base_cell.x, base_cell.y);
                 radius := (width/2) * CELL_WIDTH + width/2;
@@ -45,9 +45,9 @@ render :: (using item: *Item) {
                 break;
             }
         case .TOILET;
-            on_grid, base_cell := get_cell(cells[0].x, cells[0].y);
+            base_cell := get_cell(cells[0].x, cells[0].y);
             color := LIGHTGRAY;
-            for cells if is_on_map(it.x, it.y) then color = WHITE;
+            // for cells if is_on_map(it.x, it.y) then color = WHITE;
             base_pos := get_cell_position(base_cell.x, base_cell.y);
             draw_pos := base_pos + CELL_SIZE/2 + xy(1,1);
             DrawCircleV(draw_pos, CELL_WIDTH/2 - 3.0, color);

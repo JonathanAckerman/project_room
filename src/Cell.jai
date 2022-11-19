@@ -1,10 +1,12 @@
 Cell :: struct {
-    using coord: struct {
+    using coords: coord;
+    room: Cell_Room_Type;
+    edges: [4] Border_Type;
+
+    coord :: struct {
         x: int;
         y: int;
     }
-    room: Cell_Room_Type;
-    edges: [4] Border_Type;
 }
 
 Cell_Room_Type :: enum {
@@ -59,9 +61,9 @@ room_type_color :: (type: Cell_Room_Type, x: int, y: int) -> Color {
     color: Color;
     if #complete type == {
         case .EMPTY;
-            if is_on_map(x, y)
-                return Color.{150,  150,  150,  255};
-            else if is_in_vision(x, y) 
+            // if is_on_map(x, y)
+            //     return Color.{150,  150,  150,  255};
+            if is_in_vision(x, y) 
                 return Color.{100,  100,  100,  255};
             else 
                 return Color.{50,   50,   50,   255};
@@ -75,11 +77,11 @@ room_type_color :: (type: Cell_Room_Type, x: int, y: int) -> Color {
 
     if !is_in_vision(x, y) 
         return Color.{50, 50, 50, 255};
-    if !is_on_map(x, y) {
-        color.r = cast(u8) clamp(color.r * 0.5, 0, 255);
-        color.g = cast(u8) clamp(color.g * 0.5, 0, 255);
-        color.b = cast(u8) clamp(color.b * 0.5, 0, 255);
-    }
+    // if !is_on_map(x, y) {
+    //     color.r = cast(u8) clamp(color.r * 0.5, 0, 255);
+    //     color.g = cast(u8) clamp(color.g * 0.5, 0, 255);
+    //     color.b = cast(u8) clamp(color.b * 0.5, 0, 255);
+    // }
     
     return color;
 }
@@ -116,9 +118,9 @@ rotate_stamp :: (cells: *[] Card_Cell) {
                 replaced_index := dest_y * N + dest_x;
 
                 // dest = source, except their coords
-                coord := dest.coord;
+                coords := dest.coords;
                 <<dest = source;
-                dest.coord = coord;
+                dest.coords = coords;
 
                 // rotate dest walls
                 edge_source := dest.edges[0];

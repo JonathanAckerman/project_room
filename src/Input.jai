@@ -51,7 +51,6 @@ handle_input :: () {
     }
     if IsKeyPressed(xx KeyboardKey.F10) {
         if game.state == .LEVEL {
-            grow_map();
         }
     }
     if IsKeyPressed(xx KeyboardKey.F11) {
