@@ -89,8 +89,8 @@ simulate_level :: () {
                             }
                             despawn(card);
                             update_vision();
-                            recompute_kobold_position();
                             advance_adventurers();
+                            recompute_kobold_position();
                         }
                         else reset_highlight = false;
                     case .DOOR;
@@ -160,7 +160,7 @@ render_level :: () {
             cell := grid[y][x];
             pos := xy(1 + x * CELL_WIDTH + x, 1 + y * CELL_WIDTH + y);
             DrawRectangleV(pos, CELL_SIZE, color);
-            if debug then DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%, %", x, y)), pos, 10, 1, WHITE);
+            // if debug then DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%, %", x, y)), pos, 10, 1, WHITE);
         }
     }
 
@@ -252,6 +252,17 @@ render_level :: () {
     DrawCircleV(get_cell_position(kobold.x, kobold.y) + CELL_SIZE/2 + xy(1,1), CELL_WIDTH/3, RED);
     // draw adventurers
     DrawCircleV(get_cell_position(adventurers.x, adventurers.y) + CELL_SIZE/2 + xy(1,1), CELL_WIDTH/3, BLUE);
+
+    if debug {
+        dist, prev := dijkstra(game.adventurers);
+        for y: 0..GRID_HEIGHT-1 {
+            for x: 0..GRID_WIDTH-1 {
+                if dist[y][x] == S64_MAX continue x;
+                pos := xy(1 + x * CELL_WIDTH + x, 1 + y * CELL_WIDTH + y) + CELL_SIZE/2 - xy(3,3);
+                DrawTextEx(Fonts.bahnschrift, temp_c_string(tprint("%", dist[y][x])), pos, 14, 1, BLACK);
+            }
+        }
+    }
 
     if state == .LEVEL then DrawTextEx(Fonts.bahnschrift, "Press 'R' to restart level", xy(SIDEBAR_LEFT + 50, WINDOW_HEIGHT - 50), 24, 1, WHITE);
 }
@@ -752,4 +763,5 @@ load_level :: (index: int) {
 
     update_vision();
     recompute_kobold_position();
+    array_reset_keeping_memory(*adventurers_visited);
 }

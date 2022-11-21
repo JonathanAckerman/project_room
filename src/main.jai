@@ -41,5 +41,6 @@ Fonts: struct {
 #import "PCG";
 #import "Sort";
 
+#load "Priority_Queue.jai";
 #import "Entity_Storage";
 #import "Raylib-Jai";

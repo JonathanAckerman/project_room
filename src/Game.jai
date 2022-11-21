@@ -57,6 +57,7 @@ game: struct {
     cells_in_vision: [..] Cell.coord;
 
     adventurers: Cell.coord;
+    adventurers_visited: [..] Cell.coord;
     kobold: Cell.coord;
 }
 
@@ -295,74 +296,7 @@ update_vision :: () {
 }
 
 recompute_kobold_position :: () {
-    using game;
-
-    index :: (x, y) => y * GRID_WIDTH + x;
-    // Dijkstra
-    Dist_With_Check :: struct { dist: int; unchecked: bool; }
-    dist: [GRID_HEIGHT][GRID_WIDTH] Dist_With_Check;
-    prev: [GRID_HEIGHT][GRID_WIDTH] *Cell;
-    unsearched: [..] *Cell;
-
-    for y: 0..GRID_HEIGHT-1 {
-        for x: 0..GRID_WIDTH-1 {
-            dist[y][x] = .{S64_MAX, true};
-            array_add(*unsearched, *grid[y][x]);
-        }
-    }
-    dist[adventurers.y][adventurers.x].dist = 0;
-
-    while unsearched.count > 0 {
-        min_x := -1;
-        min_y := -1;
-        min_dist := S64_MAX;
-        for y: 0..GRID_HEIGHT-1 {
-            for x: 0..GRID_WIDTH-1 {
-                if dist[y][x].unchecked && dist[y][x].dist < min_dist {
-                    min_dist = dist[y][x].dist;
-                    min_x = x;
-                    min_y = y;
-                }
-            }
-        }
-        if min_x == -1 || min_y == -1 || min_dist == S64_MAX {
-            // print("no nearest cell: %, %, %\n", min_x, min_y, min_dist);
-            break;
-        }
-
-        searching: *Cell;
-        for unsearched {
-            if it.x == min_x && it.y == min_y {
-                searching = it;
-                array_unordered_remove_by_index(*unsearched, it_index);
-                dist[searching.y][searching.x].unchecked = false;
-                break;
-            }
-        }
-
-        for searching.edges {
-            if it == .EMPTY || it == .DOOR {
-                dir := direction_to_offset(cast(Direction) it_index);
-                neighbor_x := searching.x + (cast(int) dir.x);
-                neighbor_y := searching.y + (cast(int) dir.y);
-                if is_on_grid(neighbor_x, neighbor_y) {
-                    neighbor_on_grid := get_cell(neighbor_x, neighbor_y);
-                    if neighbor_on_grid.room != .EMPTY {
-                        // find the neighbor in unsearched
-                        neighbor: *Cell;
-                        for unsearched if it.x == neighbor_x && it.y == neighbor_y then neighbor = it;
-                        if neighbor == null continue;
-
-                        alt := dist[searching.y][searching.x].dist + 1;
-                        if alt < dist[neighbor_y][neighbor_x].dist {
-                            dist[neighbor_y][neighbor_x].dist = alt;
-                            prev[neighbor_y][neighbor_x] = searching;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    dist, prev := dijkstra(game.adventurers);
 
     max_dist := 0;
     max_x := -1;
@@ -370,8 +304,12 @@ recompute_kobold_position :: () {
     for y: 0..GRID_HEIGHT-1 {
         for x: 0..GRID_WIDTH-1 {
             if prev[y][x] != null {
-                if dist[y][x].dist > max_dist {
-                    max_dist = dist[y][x].dist;
+                if dist[y][x] > max_dist && dist[y][x] != S64_MAX {
+                    for game.adventurers_visited {
+                        if it.x == x && it.y == y then continue x;
+                    }
+
+                    max_dist = dist[y][x];
                     max_x = x;
                     max_y = y;
                 }
@@ -379,12 +317,112 @@ recompute_kobold_position :: () {
         }
     }
 
-    kobold.x, kobold.y = max_x, max_y;
+    if max_x != -1 && max_y != -1 then game.kobold.x, game.kobold.y = max_x, max_y;
 }
 
 advance_adventurers :: () {
     using game;
-    // dijkstra but add cost for walls and/or EMPTY rooms
-    // ie: allow digging / busting down walls
-    adventurers.y -= 1;
+    array_add(*adventurers_visited, adventurers);
+    // dist, prev := dijkstra(adventurers);
+
+    // for y: 0..GRID_HEIGHT-1 {
+    //     for x: 0..GRID_WIDTH-1 {
+
+    //     }
+    // }
 }
+
+dijkstra :: (start: Cell.coord, is_adventurers: bool = false) -> [GRID_HEIGHT][GRID_WIDTH] int, [GRID_HEIGHT][GRID_WIDTH] *Cell{
+    dist: [GRID_HEIGHT][GRID_WIDTH] int;
+    prev: [GRID_HEIGHT][GRID_WIDTH] *Cell;
+    unsearched: [..] *Cell;
+
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            dist[y][x] = S64_MAX;
+            array_add(*unsearched, *game.grid[y][x]);
+        }
+    }
+    dist[game.adventurers.y][game.adventurers.x] = 0;
+
+    while unsearched.count > 0 {
+        nearest := unsearched[0];
+        min_dist := dist[nearest.y][nearest.x];
+        for unsearched {
+            other_dist := dist[it.y][it.x];
+            if other_dist < min_dist {
+                min_dist = other_dist;
+                nearest = it;
+            }
+        }
+        array_unordered_remove_by_value(*unsearched, nearest);
+
+        for nearest.edges {
+            dir := direction_to_offset(cast(Direction) it_index);
+            neighbor_x := nearest.x + (cast(int) dir.x);
+            neighbor_y := nearest.y + (cast(int) dir.y);
+            if is_on_grid(neighbor_x, neighbor_y) {
+                // neighbor_on_grid := get_cell(neighbor_x, neighbor_y);
+                neighbor: *Cell;
+                for unsearched if it.x == neighbor_x && it.y == neighbor_y then neighbor = it;
+                if neighbor == null continue;
+
+                cost := traversal_cost(nearest, neighbor, it_index, is_adventurers);
+                if cost != S64_MAX then cost += dist[nearest.y][nearest.x];
+                
+                if cost < dist[neighbor_y][neighbor_x] {
+                    dist[neighbor_y][neighbor_x] = cost;
+                    prev[neighbor_y][neighbor_x] = nearest;
+                }
+            }
+        }
+    }
+
+    return dist, prev;
+}
+
+traversal_cost :: (from: *Cell, to: *Cell, direction: int, is_adventurers: bool = false) -> int {
+    cost := 1;
+
+    if is_adventurers {
+        if from.room == .EMPTY then cost += 100;
+        if to.room   == .EMPTY then cost += 100;
+
+        if from.edges[direction] == {
+            case .DOOR; cost += 2;
+            case .WALL; cost += 3;
+        }
+        if to.edges[opposite(direction)] == {
+            case .DOOR; cost += 2;
+            case .WALL; cost += 3;
+        }
+    }
+    else {
+        if from.room == .EMPTY return S64_MAX;
+        if to.room   == .EMPTY return S64_MAX;
+        if to.x == game.adventurers.x && to.y == game.adventurers.y return S64_MAX;
+        for game.adventurers_visited if it.x == to.x && it.y == to.y return S64_MAX;
+
+        if from.edges[direction] == {
+            case .WALL; return S64_MAX;
+        }
+        if to.edges[opposite(direction)] == {
+            case .WALL; return S64_MAX;
+        }
+    }
+
+    return cost;
+}
+
+/* 
+Adventurer logic:
+- djikstra to find dist/path to all possible cells from adventurer pos
+    - here every cell is possible
+- choose next cell on shortest path to kobold
+
+Kobold logic:
+- djikstra to find dist/path to all possible cells from kobold pos
+    - here we wont see every cell and path will be blocked by adventurers and adven_visited
+- compute shortest path (A*) from adventurers to every candidate cell
+- choose the max dist of those
+*/
