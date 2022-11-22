@@ -56,6 +56,17 @@ counter_clockwise :: (dir: Direction) -> Direction {
     i := (cast(int) dir) + 3;
     return cast(Direction)(i % 4);
 }
+direction_index_between :: (from: Cell.coord, to: Cell.coord) -> int {
+    dir_x := to.x - from.x;
+    dir_y := to.y - from.y;
+    direction_index := -1;
+    if dir_x == 0 && dir_y == -1 then direction_index = cast(int) Direction.NORTH;
+    if dir_x == 1 && dir_y == 0  then direction_index = cast(int) Direction.EAST;
+    if dir_x == 0 && dir_y == 1  then direction_index = cast(int) Direction.SOUTH;
+    if dir_x == -1 && dir_y == 0 then direction_index = cast(int) Direction.WEST;
+
+    return direction_index;
+}
 
 room_type_color :: (type: Cell_Room_Type, x: int, y: int) -> Color {
     color: Color;
@@ -156,4 +167,48 @@ rotate_stamp :: (cells: *[] Card_Cell) {
         row_number += 1;
         cycle_width -= 2;
     }
+}
+
+get_cell_index :: (point: Vector2) -> int, int {
+    x := cast(int) (point.x / (CELL_WIDTH + 1));
+    y := cast(int) (point.y / (CELL_WIDTH + 1));
+
+    if x < 0 || y < 0 return -1, -1;
+    if x > GRID_WIDTH || y > GRID_HEIGHT return -1, -1;
+    return x, y;
+}
+
+get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
+    x := x_index * (CELL_WIDTH + 1);
+    y := y_index * (CELL_WIDTH + 1);
+    return xy(x, y);
+}
+
+get_cell :: (x: int, y: int) -> *Cell {
+    assert(is_on_grid(x, y), "cell not on grid");
+    return *game.grid[y][x];
+}
+get_cell :: (coord: Cell.coord) -> *Cell {
+    assert(is_on_grid(coord.x, coord.y), "cell not on grid");
+    return *game.grid[coord.y][coord.x];
+}
+
+get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
+    neighbor_x := x;
+    neighbor_y := y;
+    if #complete direction == {
+        case .NORTH;
+            neighbor_y -= 1;
+        case .EAST;
+            neighbor_x += 1;
+        case .SOUTH;
+            neighbor_y += 1;
+        case .WEST;
+            neighbor_x -= 1;
+    }
+
+    if !is_on_grid(neighbor_x, neighbor_y) return false, null;
+
+    result := get_cell(neighbor_x, neighbor_y);
+    return is_on_grid(result.x, result.y), result;
 }

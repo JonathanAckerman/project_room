@@ -40,6 +40,7 @@ Fonts: struct {
 #import "Basic";
 #import "PCG";
 #import "Sort";
+#import "Hash_Table";
 
 #load "Priority_Queue.jai";
 #import "Entity_Storage";

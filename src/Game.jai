@@ -113,51 +113,6 @@ game_reset :: () {
     array_copy(*player_deck, NEW_GAME_CARDS);
 }
 
-get_cell_index :: (point: Vector2) -> int, int {
-    x := cast(int) (point.x / (CELL_WIDTH + 1));
-    y := cast(int) (point.y / (CELL_WIDTH + 1));
-
-    if x < 0 || y < 0 return -1, -1;
-    if x > GRID_WIDTH || y > GRID_HEIGHT return -1, -1;
-    return x, y;
-}
-
-get_cell_position :: (x_index: int, y_index: int) -> Vector2 {
-    x := x_index * (CELL_WIDTH + 1);
-    y := y_index * (CELL_WIDTH + 1);
-    return xy(x, y);
-}
-
-// rethink this, dont need bool
-// get_cell :: (x: int, y: int) -> bool, *Cell {
-//     if x < 0 || y < 0 || x > GRID_WIDTH-1 || y > GRID_HEIGHT-1 return false, null;
-//     return true, *game.grid[y][x];
-// }
-get_cell :: (x: int, y: int) -> *Cell {
-    assert(is_on_grid(x, y), "cell not on grid");
-    return *game.grid[y][x];
-}
-
-get_neighbor :: (x: int, y: int, direction: Direction) -> bool, *Cell {
-    neighbor_x := x;
-    neighbor_y := y;
-    if #complete direction == {
-        case .NORTH;
-            neighbor_y -= 1;
-        case .EAST;
-            neighbor_x += 1;
-        case .SOUTH;
-            neighbor_y += 1;
-        case .WEST;
-            neighbor_x -= 1;
-    }
-
-    if !is_on_grid(neighbor_x, neighbor_y) return false, null;
-
-    result := get_cell(neighbor_x, neighbor_y);
-    return is_on_grid(result.x, result.y), result;
-}
-
 is_valid_placement :: (cells: [] Card_Cell) -> bool {
     mouse_x, mouse_y := get_cell_index(input.mouse_position);
 
@@ -367,7 +322,7 @@ dijkstra :: (start: Cell.coord, is_adventurers: bool = false) -> [GRID_HEIGHT][G
                 for unsearched if it.x == neighbor_x && it.y == neighbor_y then neighbor = it;
                 if neighbor == null continue;
 
-                cost := traversal_cost(nearest, neighbor, it_index, is_adventurers);
+                cost := traversal_cost(nearest.coords, neighbor.coords, is_adventurers);
                 if cost != S64_MAX then cost += dist[nearest.y][nearest.x];
                 
                 if cost < dist[neighbor_y][neighbor_x] {
@@ -381,32 +336,36 @@ dijkstra :: (start: Cell.coord, is_adventurers: bool = false) -> [GRID_HEIGHT][G
     return dist, prev;
 }
 
-traversal_cost :: (from: *Cell, to: *Cell, direction: int, is_adventurers: bool = false) -> int {
+traversal_cost :: (from: Cell.coord, to: Cell.coord, is_adventurers: bool = false) -> int {
     cost := 1;
 
-    if is_adventurers {
-        if from.room == .EMPTY then cost += 100;
-        if to.room   == .EMPTY then cost += 100;
+    direction := direction_index_between(from, to);
+    from_cell := get_cell(from);
+    to_cell := get_cell(to);
 
-        if from.edges[direction] == {
+    if is_adventurers {
+        if from_cell.room == .EMPTY then cost += 100;
+        if to_cell.room   == .EMPTY then cost += 100;
+
+        if from_cell.edges[direction] == {
             case .DOOR; cost += 2;
             case .WALL; cost += 3;
         }
-        if to.edges[opposite(direction)] == {
+        if to_cell.edges[opposite(direction)] == {
             case .DOOR; cost += 2;
             case .WALL; cost += 3;
         }
     }
     else {
-        if from.room == .EMPTY return S64_MAX;
-        if to.room   == .EMPTY return S64_MAX;
+        if from_cell.room == .EMPTY return S64_MAX;
+        if to_cell.room   == .EMPTY return S64_MAX;
         if to.x == game.adventurers.x && to.y == game.adventurers.y return S64_MAX;
         for game.adventurers_visited if it.x == to.x && it.y == to.y return S64_MAX;
 
-        if from.edges[direction] == {
+        if from_cell.edges[direction] == {
             case .WALL; return S64_MAX;
         }
-        if to.edges[opposite(direction)] == {
+        if to_cell.edges[opposite(direction)] == {
             case .WALL; return S64_MAX;
         }
     }
@@ -426,3 +385,75 @@ Kobold logic:
 - compute shortest path (A*) from adventurers to every candidate cell
 - choose the max dist of those
 */
+
+a_star :: (start: Cell.coord, goal: Cell.coord) -> [..] Cell.coord {
+    reconstruct_path :: (from: Table(int, Cell.coord), goal: Cell.coord) -> [..] Cell.coord {
+        path: [..] Cell.coord;
+        array_add(*path, goal);
+        current := goal;
+        found := true;
+        while true {
+            current, found = table_find(*from, current.y * GRID_WIDTH + current.x);
+            if !found break;
+            array_insert_at(*path, current, 0);
+        }
+        return path;
+    }
+
+    Coord_with_f_score :: struct { using coord: Cell.coord; f: float; }
+    open: Priority_Queue(Coord_with_f_score, float);
+    large_to_small :: (l,r) => r.f - l.f;
+    open.compare = large_to_small;
+
+    from: Table(int, Cell.coord);
+
+    g_score: [GRID_HEIGHT][GRID_WIDTH] int;
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            g_score[y][x] = S64_MAX;
+        }
+    }
+    g_score[start.y][start.x] = 0;
+
+    f_score: [GRID_HEIGHT][GRID_WIDTH] float;
+    for y: 0..GRID_HEIGHT-1 {
+        for x: 0..GRID_WIDTH-1 {
+            f_score[y][x] = FLOAT32_INFINITY;
+        }
+    }
+    f_start := distance(xy(xx start.x, xx start.y), xy(xx goal.x, xx goal.y));
+    f_score[start.y][start.x] = f_start;
+
+    start_node: Coord_with_f_score;
+    start_node.coord, start_node.f = start, f_start;
+    push(*open, start_node);
+
+    while open.data.count > 0 {
+        current := pop(*open);
+        if current.coord.x == goal.x 
+        && current.coord.y == goal.y return reconstruct_path(from, current.coord);
+
+        neighbor_offsets := Cell.coord.[.{0,-1}, .{1,0}, .{0,1}, .{-1,0}];
+        for neighbor_offsets {
+            neighbor: Cell.coord;
+            neighbor.x, neighbor.y = current.x + it.x, current.y + it.y;
+            if !is_on_grid(neighbor.x, neighbor.y) continue;
+
+            tentative_g_score := g_score[current.y][current.x] + traversal_cost(current.coord, neighbor); // @@@: here we assume kobold movement, maybe need arg?
+            if tentative_g_score < g_score[neighbor.y][neighbor.x] {
+                key : int = neighbor.y * GRID_WIDTH + neighbor.x;
+                table_add(*from, key, current.coord);
+                g_score[neighbor.y][neighbor.x] = tentative_g_score;
+                neighbor_f_score := tentative_g_score + distance(xy(xx neighbor.x, xx neighbor.y), xy(xx goal.x, xx goal.y));
+                f_score[neighbor.y][neighbor.x] = neighbor_f_score;
+                for open.data if it.x == neighbor.x && it.y == neighbor.y {
+                    neighbor_node: Coord_with_f_score;
+                    neighbor_node.coord, neighbor_node.f = neighbor, neighbor_f_score;
+                    array_add(*open.data, neighbor_node);
+                }
+            }
+        }
+    }
+    empty: [..] Cell.coord;
+    return empty;
+}
